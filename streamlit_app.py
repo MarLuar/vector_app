@@ -244,4 +244,4 @@ else:
 
 # Footer
 st.divider()
-st.markdown("Developed by TikTok: [@k00gs](https://www.tiktok.com/@k00gs) | GitHub: [MarLuar](https://github.com/MarLuar)")
+st.markdown("Developed by [Mar Luar](https://www.tiktok.com/@k00gs)")
