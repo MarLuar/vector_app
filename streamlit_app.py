@@ -73,14 +73,14 @@ with st.sidebar:
     # Force 1
     st.subheader("Force 1 (F₁)")
     f1_mag = st.number_input("Magnitude (N):", min_value=0.0, value=50.0, step=1.0, key="f1_mag")
-    f1_angle = st.slider("Angle (°):", 0, 360, 30, key="f1_angle")
+    f1_angle = st.number_input("Angle (°):", min_value=0.0, max_value=360.0, value=30.0, step=1.0, key="f1_angle")
     
     st.divider()
     
     # Force 2
     st.subheader("Force 2 (F₂)")
     f2_mag = st.number_input("Magnitude (N):", min_value=0.0, value=40.0, step=1.0, key="f2_mag")
-    f2_angle = st.slider("Angle (°):", 0, 360, 120, key="f2_angle")
+    f2_angle = st.number_input("Angle (°):", min_value=0.0, max_value=360.0, value=120.0, step=1.0, key="f2_angle")
     
     st.divider()
     
