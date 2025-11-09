@@ -150,7 +150,7 @@ with gr.Blocks(title="Vector Addition Calculator", theme=gr.themes.Soft()) as de
     **Mobile-friendly** - Works on all devices!
     
     ---
-    Developed by TikTok: [@k00gs](https://www.tiktok.com/@k00gs) | GitHub: [MarLuar](https://github.com/MarLuar)
+    Developed by [Mar Luar](https://www.tiktok.com/@k00gs)
     """)
 
 if __name__ == "__main__":

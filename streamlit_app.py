@@ -195,11 +195,19 @@ if calculate_btn or 'last_result' in st.session_state:
             st.subheader("Components")
             st.write(f"**X:** {r.x:.2f} N")
             st.write(f"**Y:** {r.y:.2f} N")
+            
+            st.divider()
+            
+            st.subheader("Solution")
+            from vector_addition import generate_direct_solution
+            solution_text = generate_direct_solution(f1, f2, r, scale)
+            st.code(solution_text, language=None)
         
-        # Solution panel
+        # Detailed solution panel
         if show_solution:
             st.divider()
-            st.subheader("Analytical Solution")
+            st.subheader("Detailed Analytical Solution")
+            from vector_addition import generate_solution_text
             solution_text = generate_solution_text(f1, f2, r, scale)
             st.code(solution_text, language=None)
         

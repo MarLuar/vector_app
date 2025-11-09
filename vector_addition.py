@@ -361,6 +361,53 @@ def contribution_note(a: float, b: float, axis: str) -> str:
     return f'{lead} dominates {axis}'
 
 
+def generate_direct_solution(f1: VectorData, f2: VectorData, r: VectorData, scale: float) -> str:
+    """
+    Generate a direct, straightforward solution without pedagogical explanation.
+    
+    Args:
+        f1, f2: Input force vector data
+        r: Resultant vector data
+        scale: Scale factor (N per cm)
+        
+    Returns:
+        Formatted solution text
+    """
+    r_cm = r.mag / scale
+    
+    text = 'SOLUTION\n'
+    text += '=' * 50 + '\n\n'
+    
+    text += 'GIVEN:\n'
+    text += f'  F₁ = {f1.mag} N @ {f1.angle}°\n'
+    text += f'  F₂ = {f2.mag} N @ {f2.angle}°\n'
+    text += f'  Scale: 1 cm = {scale} N\n\n'
+    
+    text += 'COMPONENTS:\n'
+    text += f'  F₁ₓ = {f1.mag} × cos({f1.angle}°) = {f1.x:.2f} N\n'
+    text += f'  F₁ᵧ = {f1.mag} × sin({f1.angle}°) = {f1.y:.2f} N\n'
+    text += f'  F₂ₓ = {f2.mag} × cos({f2.angle}°) = {f2.x:.2f} N\n'
+    text += f'  F₂ᵧ = {f2.mag} × sin({f2.angle}°) = {f2.y:.2f} N\n\n'
+    
+    text += 'RESULTANT COMPONENTS:\n'
+    text += f'  FRₓ = {f1.x:.2f} + {f2.x:.2f} = {r.x:.2f} N\n'
+    text += f'  FRᵧ = {f1.y:.2f} + {f2.y:.2f} = {r.y:.2f} N\n\n'
+    
+    text += 'MAGNITUDE (Pythagorean Theorem):\n'
+    text += f'  |FR| = √(FRₓ² + FRᵧ²)\n'
+    text += f'       = √({r.x:.2f}² + {r.y:.2f}²)\n'
+    text += f'       = √({r.x**2:.2f} + {r.y**2:.2f})\n'
+    text += f'       = √{r.x**2 + r.y**2:.2f}\n'
+    text += f'       = {r.mag:.2f} N\n'
+    text += f'       = {format_measurement(r_cm)} cm\n\n'
+    
+    text += 'ANGLE (Inverse Tangent):\n'
+    text += f'  θ = atan2({r.y:.2f}, {r.x:.2f})\n'
+    text += f'    = {r.angle:.2f}°\n'
+    
+    return text
+
+
 def generate_solution_text(f1: VectorData, f2: VectorData, r: VectorData, 
                           scale: float) -> str:
     """
