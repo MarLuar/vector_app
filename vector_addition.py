@@ -321,9 +321,14 @@ def draw_angle_arc(ax, angle: float, color: str, max_val: float,
     precision = 1 if highlight else 0
     angle_text = f'{angle:.{precision}f}°'
     
+    # Keep text upright - rotate 180° for downward angles
+    text_rotation = 0
+    if angle < -90 or angle > 90:
+        text_rotation = 180
+    
     ax.text(tip_x, tip_y, angle_text, fontsize=11, color=color if not highlight else 'black',
             fontweight='bold', ha='center', va='center',
-            rotation=angle - 90, rotation_mode='anchor', zorder=10, bbox=bbox_style)
+            rotation=text_rotation, zorder=10, bbox=bbox_style)
 
 
 def quadrant(angle_deg: float) -> str:
