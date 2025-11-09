@@ -198,11 +198,13 @@ if calculate_btn or 'last_result' in st.session_state:
                 # Add force label near the middle of the vector
                 mid_x = cumulative_x + v.x * 0.5
                 mid_y = cumulative_y + v.y * 0.5
+                # Rotate 180° for negative angles or downward vectors to keep readable
+                label_rotation = 180 if (v.angle < -90 or v.angle > 90) else 0
                 ax.text(mid_x, mid_y, f'F{subscript}', 
                         fontsize=9, color='white', fontweight='bold',
                         bbox=dict(boxstyle='circle,pad=0.3', facecolor=color, 
                                  edgecolor='white', linewidth=1.5, alpha=0.9),
-                        ha='center', va='center', zorder=10, rotation=0)
+                        ha='center', va='center', zorder=10, rotation=label_rotation)
                 
                 # Add angle arc from starting point of each vector
                 if abs(v.angle) > 0.1:  # Only draw if angle is significant
