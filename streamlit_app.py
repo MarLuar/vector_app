@@ -183,7 +183,7 @@ if calculate_btn or 'last_result' in st.session_state:
                 draw_angle_arc(ax, f2.angle, colors[1], max_val, ARC_F2_RADIUS_RATIO, theme=st.session_state.theme)
         
         else:  # Polygon (Tip-to-Tail) method
-            # Draw vectors tip-to-tail with simplified labels
+            # Draw vectors tip-to-tail with labels and angle arcs
             cumulative_x, cumulative_y = 0.0, 0.0
             
             for i, v in enumerate(vector_list):
@@ -191,12 +191,40 @@ if calculate_btn or 'last_result' in st.session_state:
                 subscript = chr(0x2080 + i + 1) if i < 10 else str(i + 1)
                 color = colors[i % len(colors)]
                 
-                # Draw arrow only (no labels on arrows for cleaner look)
+                # Draw arrow
                 ax.quiver(cumulative_x, cumulative_y, v.x, v.y, angles='xy', scale_units='xy', scale=1,
                           color=color, width=0.003, 
                           label=f'F{subscript} = {v.mag:.2f}N, θ = {v.angle:.2f}°', zorder=3)
                 
-                # Add simple label at tip
+                # Add force label near the middle of the vector
+                mid_x = cumulative_x + v.x * 0.5
+                mid_y = cumulative_y + v.y * 0.5
+                ax.text(mid_x, mid_y, f'F{subscript}', 
+                        fontsize=9, color='white', fontweight='bold',
+                        bbox=dict(boxstyle='circle,pad=0.3', facecolor=color, 
+                                 edgecolor='white', linewidth=1.5, alpha=0.9),
+                        ha='center', va='center', zorder=10)
+                
+                # Add angle arc from origin for each vector
+                if abs(v.angle) > 0.1:  # Only draw if angle is significant
+                    arc_radius = max_val * 0.12 * (0.7 + i * 0.15)  # Increasing radius for each vector
+                    theta = np.linspace(0, np.radians(v.angle), 50)
+                    arc_x = cumulative_x + arc_radius * np.cos(theta)
+                    arc_y = cumulative_y + arc_radius * np.sin(theta)
+                    ax.plot(arc_x, arc_y, color=color, linewidth=1.5, zorder=2)
+                    
+                    # Add angle label (keep it upright)
+                    label_angle_rad = np.radians(v.angle * 0.5)
+                    label_radius = arc_radius * 1.2
+                    label_x = cumulative_x + label_radius * np.cos(label_angle_rad)
+                    label_y = cumulative_y + label_radius * np.sin(label_angle_rad)
+                    ax.text(label_x, label_y, f'{v.angle:.0f}°', 
+                            fontsize=8, color=color, fontweight='bold',
+                            bbox=dict(boxstyle='round,pad=0.2', facecolor='white', 
+                                     edgecolor=color, linewidth=1, alpha=0.9),
+                            ha='center', va='center', zorder=10)
+                
+                # Add dot at tip
                 tip_x = cumulative_x + v.x
                 tip_y = cumulative_y + v.y
                 ax.plot(tip_x, tip_y, 'o', color=color, markersize=6, zorder=4)
@@ -210,12 +238,21 @@ if calculate_btn or 'last_result' in st.session_state:
                       color='#28A745', width=0.004, 
                       label=f'FR = {r.mag:.2f}N, θ = {r.angle:.2f}°', zorder=5)
             
-            # Add prominent label for resultant
-            r_mid_x = r.x * 0.5
-            r_mid_y = r.y * 0.5
+            # Add FR circle label near the vector
+            r_label_x = r.x * 0.35
+            r_label_y = r.y * 0.35
+            ax.text(r_label_x, r_label_y, 'FR', 
+                    fontsize=10, color='white', fontweight='bold',
+                    bbox=dict(boxstyle='circle,pad=0.35', facecolor='#28A745', 
+                             edgecolor='white', linewidth=2, alpha=0.95),
+                    ha='center', va='center', zorder=10)
+            
+            # Add magnitude label for resultant
+            r_mid_x = r.x * 0.65
+            r_mid_y = r.y * 0.65
             ax.text(r_mid_x, r_mid_y, f'{r_cm:.2f} cm', 
-                    fontsize=12, color='#28A745', fontweight='bold',
-                    bbox=dict(boxstyle='round,pad=0.3', facecolor='yellow', 
+                    fontsize=10, color='#28A745', fontweight='bold',
+                    bbox=dict(boxstyle='round,pad=0.25', facecolor='yellow', 
                              edgecolor='#28A745', linewidth=2, alpha=0.95),
                     ha='center', va='center', zorder=10)
         
