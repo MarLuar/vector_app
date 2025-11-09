@@ -64,6 +64,16 @@ st.markdown("Visualize and analyze force vectors")
 with st.sidebar:
     st.header("Settings")
     
+    # Method selection
+    st.subheader("Visualization Method")
+    method = st.radio(
+        "Choose method:",
+        ["Parallelogram", "Polygon (Tip-to-Tail)"],
+        help="Parallelogram: Both vectors start at origin\nPolygon: Second vector starts at tip of first"
+    )
+    
+    st.divider()
+    
     # Scale settings
     st.subheader("Scale")
     scale = st.number_input("1 cm equals (N):", min_value=0.1, value=10.0, step=0.5)
@@ -103,6 +113,7 @@ if calculate_btn or 'last_result' in st.session_state:
         
         # Results section - Plot on top
         st.subheader("Vector Visualization")
+        st.info(f"🔹 **Method:** {method}")
         
         # Create plot
         fig = Figure(figsize=(12, 7), dpi=100, facecolor=st.session_state.theme.background_color)
@@ -116,23 +127,44 @@ if calculate_btn or 'last_result' in st.session_state:
         f2_cm = f2.mag / scale
         r_cm = r.mag / scale
         
-        draw_vector_with_labels(ax, 0, 0, f1.x, f1.y, '#5B8DEE', 'F₁',
-                               f1.mag, f1.angle, f1_cm, max_val, theme=st.session_state.theme)
-        draw_vector_with_labels(ax, 0, 0, f2.x, f2.y, '#FF6B6B', 'F₂',
-                               f2.mag, f2.angle, f2_cm, max_val, theme=st.session_state.theme)
-        draw_vector_with_labels(ax, 0, 0, r.x, r.y, '#28A745', 'FR',
-                               r.mag, r.angle, r_cm, max_val, width=0.004,
-                               highlight=True, theme=st.session_state.theme)
+        if method == "Parallelogram":
+            # Parallelogram method: both vectors start at origin
+            draw_vector_with_labels(ax, 0, 0, f1.x, f1.y, '#5B8DEE', 'F₁',
+                                   f1.mag, f1.angle, f1_cm, max_val, theme=st.session_state.theme)
+            draw_vector_with_labels(ax, 0, 0, f2.x, f2.y, '#FF6B6B', 'F₂',
+                                   f2.mag, f2.angle, f2_cm, max_val, theme=st.session_state.theme)
+            draw_vector_with_labels(ax, 0, 0, r.x, r.y, '#28A745', 'FR',
+                                   r.mag, r.angle, r_cm, max_val, width=0.004,
+                                   highlight=True, theme=st.session_state.theme)
+            
+            # Construction lines for parallelogram
+            ax.plot([f1.x, f1.x + f2.x], [f1.y, f1.y + f2.y],
+                    color='#FF6B6B', linestyle='--', linewidth=1.5, alpha=0.4)
+            ax.plot([f2.x, f2.x + f1.x], [f2.y, f2.y + f1.y],
+                    color='#5B8DEE', linestyle='--', linewidth=1.5, alpha=0.4)
         
-        # Construction lines
-        ax.plot([f1.x, f1.x + f2.x], [f1.y, f1.y + f2.y],
-                color='#FF6B6B', linestyle='--', linewidth=1.5, alpha=0.4)
-        ax.plot([f2.x, f2.x + f1.x], [f2.y, f2.y + f1.y],
-                color='#5B8DEE', linestyle='--', linewidth=1.5, alpha=0.4)
+        else:  # Polygon (Tip-to-Tail) method
+            # First vector starts at origin
+            draw_vector_with_labels(ax, 0, 0, f1.x, f1.y, '#5B8DEE', 'F₁',
+                                   f1.mag, f1.angle, f1_cm, max_val, theme=st.session_state.theme)
+            # Second vector starts at tip of first
+            draw_vector_with_labels(ax, f1.x, f1.y, f2.x, f2.y, '#FF6B6B', 'F₂',
+                                   f2.mag, f2.angle, f2_cm, max_val, theme=st.session_state.theme)
+            # Resultant from origin to final tip
+            draw_vector_with_labels(ax, 0, 0, r.x, r.y, '#28A745', 'FR',
+                                   r.mag, r.angle, r_cm, max_val, width=0.004,
+                                   highlight=True, theme=st.session_state.theme)
         
         # Angle arcs
-        draw_angle_arc(ax, f1.angle, '#5B8DEE', max_val, ARC_F1_RADIUS_RATIO, theme=st.session_state.theme)
-        draw_angle_arc(ax, f2.angle, '#FF6B6B', max_val, ARC_F2_RADIUS_RATIO, theme=st.session_state.theme)
+        if method == "Parallelogram":
+            # In parallelogram, show all angles from origin
+            draw_angle_arc(ax, f1.angle, '#5B8DEE', max_val, ARC_F1_RADIUS_RATIO, theme=st.session_state.theme)
+            draw_angle_arc(ax, f2.angle, '#FF6B6B', max_val, ARC_F2_RADIUS_RATIO, theme=st.session_state.theme)
+        else:
+            # In polygon, only show F1 angle from origin (F2 is tip-to-tail)
+            draw_angle_arc(ax, f1.angle, '#5B8DEE', max_val, ARC_F1_RADIUS_RATIO, theme=st.session_state.theme)
+        
+        # Always show resultant angle
         draw_angle_arc(ax, r.angle, '#28A745', max_val, ARC_FR_RADIUS_RATIO,
                       linewidth=2.5, highlight=True, theme=st.session_state.theme)
         
@@ -155,7 +187,8 @@ if calculate_btn or 'last_result' in st.session_state:
         
         ax.set_xlabel('X (N)', fontsize=11, color=st.session_state.theme.text_color, fontweight='600')
         ax.set_ylabel('Y (N)', fontsize=11, color=st.session_state.theme.text_color, fontweight='600')
-        ax.set_title('Vector Addition Visualization', fontsize=13, fontweight='bold',
+        title = f'Vector Addition - {method} Method'
+        ax.set_title(title, fontsize=13, fontweight='bold',
                     color=st.session_state.theme.text_color, pad=15)
         ax.tick_params(colors=st.session_state.theme.text_color)
         
@@ -231,12 +264,16 @@ else:
     with st.expander("Quick Start Guide"):
         st.markdown("""
         **How to use:**
-        1. Set the scale (how many Newtons = 1 cm)
-        2. Enter Force 1 magnitude and angle
-        3. Enter Force 2 magnitude and angle
-        4. Click **Calculate** to see the resultant vector
+        1. Choose visualization method:
+           - **Parallelogram**: Both vectors start at the origin (classic)
+           - **Polygon (Tip-to-Tail)**: Second vector starts at tip of first
+        2. Set the scale (how many Newtons = 1 cm)
+        3. Enter Force 1 magnitude and angle
+        4. Enter Force 2 magnitude and angle
+        5. Click **Calculate** to see the resultant vector
         
         **Features:**
+        - Two visualization methods
         - Works on mobile devices
         - Step-by-step solution
         - Download plots as PNG
@@ -247,6 +284,10 @@ else:
         - 90° = Up (+Y axis)
         - 180° = Left (-X axis)
         - 270° = Down (-Y axis)
+        
+        **Methods Explained:**
+        - **Parallelogram**: Shows how vectors combine when both applied at same point
+        - **Polygon**: Shows sequential application of forces (tip-to-tail)
         """)
 
 # Footer
