@@ -220,9 +220,7 @@ if calculate_btn or 'last_result' in st.session_state:
                     label_x = cumulative_x + label_radius * np.cos(label_angle_rad)
                     label_y = cumulative_y + label_radius * np.sin(label_angle_rad)
                     ax.text(label_x, label_y, f'{v.angle:.0f}°', 
-                            fontsize=7, color=color, fontweight='bold',
-                            bbox=dict(boxstyle='round,pad=0.15', facecolor='white', 
-                                     edgecolor=color, linewidth=0.8, alpha=0.9),
+                            fontsize=8, color=color, fontweight='bold',
                             ha='center', va='center', zorder=10, rotation=0)
                 
                 # Add dot at tip

@@ -315,9 +315,6 @@ def draw_angle_arc(ax, angle: float, color: str, max_val: float,
     if theme is None:
         theme = ColorTheme.ocean_theme()
     
-    bbox_style = dict(boxstyle='round,pad=0.25', facecolor=theme.highlight_color,
-                     edgecolor=color, linewidth=1.5, alpha=0.9) if highlight else None
-    
     precision = 1 if highlight else 0
     angle_text = f'{angle:.{precision}f}°'
     
@@ -326,9 +323,10 @@ def draw_angle_arc(ax, angle: float, color: str, max_val: float,
     if angle < -90 or angle > 90:
         text_rotation = 180
     
-    ax.text(tip_x, tip_y, angle_text, fontsize=11, color=color if not highlight else 'black',
+    # No background box, just colored text
+    ax.text(tip_x, tip_y, angle_text, fontsize=11, color=color,
             fontweight='bold', ha='center', va='center',
-            rotation=text_rotation, zorder=10, bbox=bbox_style)
+            rotation=text_rotation, zorder=10)
 
 
 def quadrant(angle_deg: float) -> str:
