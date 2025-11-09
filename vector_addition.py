@@ -315,13 +315,13 @@ def draw_angle_arc(ax, angle: float, color: str, max_val: float,
     if theme is None:
         theme = ColorTheme.ocean_theme()
     
-    bbox_style = dict(boxstyle='round,pad=0.4', facecolor=theme.highlight_color,
-                     edgecolor=color, linewidth=2, alpha=0.9) if highlight else None
+    bbox_style = dict(boxstyle='round,pad=0.25', facecolor=theme.highlight_color,
+                     edgecolor=color, linewidth=1.5, alpha=0.9) if highlight else None
     
     precision = 1 if highlight else 0
     angle_text = f'{angle:.{precision}f}°'
     
-    ax.text(tip_x, tip_y, angle_text, fontsize=14, color=color if not highlight else 'black',
+    ax.text(tip_x, tip_y, angle_text, fontsize=11, color=color if not highlight else 'black',
             fontweight='bold', ha='center', va='center',
             rotation=angle - 90, rotation_mode='anchor', zorder=10, bbox=bbox_style)
 

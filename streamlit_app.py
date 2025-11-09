@@ -214,9 +214,9 @@ if calculate_btn or 'last_result' in st.session_state:
             r_mid_x = r.x * 0.5
             r_mid_y = r.y * 0.5
             ax.text(r_mid_x, r_mid_y, f'{r_cm:.2f} cm', 
-                    fontsize=16, color='#28A745', fontweight='bold',
-                    bbox=dict(boxstyle='round,pad=0.5', facecolor='yellow', 
-                             edgecolor='#28A745', linewidth=2.5, alpha=0.95),
+                    fontsize=12, color='#28A745', fontweight='bold',
+                    bbox=dict(boxstyle='round,pad=0.3', facecolor='yellow', 
+                             edgecolor='#28A745', linewidth=2, alpha=0.95),
                     ha='center', va='center', zorder=10)
         
         # Always show resultant angle
@@ -253,8 +253,10 @@ if calculate_btn or 'last_result' in st.session_state:
                     color=st.session_state.theme.text_color, pad=15)
         ax.tick_params(colors=st.session_state.theme.text_color)
         
-        legend = ax.legend(loc='upper right', fontsize=10, framealpha=0.95,
-                          edgecolor=st.session_state.theme.text_color)
+        # Compact legend
+        legend = ax.legend(loc='upper right', fontsize=8, framealpha=0.95,
+                          edgecolor=st.session_state.theme.text_color,
+                          borderpad=0.4, labelspacing=0.3, handlelength=1.5, handletextpad=0.5)
         
         fig.tight_layout()
         st.pyplot(fig, width='stretch')
