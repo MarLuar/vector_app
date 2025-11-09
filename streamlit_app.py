@@ -191,10 +191,9 @@ if calculate_btn or 'last_result' in st.session_state:
                 subscript = chr(0x2080 + i + 1) if i < 10 else str(i + 1)
                 color = colors[i % len(colors)]
                 
-                # Draw arrow
+                # Draw arrow (no label in quiver since we have title legend)
                 ax.quiver(cumulative_x, cumulative_y, v.x, v.y, angles='xy', scale_units='xy', scale=1,
-                          color=color, width=0.003, 
-                          label=f'F{subscript} = {v.mag:.2f}N, θ = {v.angle:.2f}°', zorder=3)
+                          color=color, width=0.003, zorder=3)
                 
                 # Add force label near the middle of the vector
                 mid_x = cumulative_x + v.x * 0.5
@@ -203,31 +202,31 @@ if calculate_btn or 'last_result' in st.session_state:
                         fontsize=9, color='white', fontweight='bold',
                         bbox=dict(boxstyle='circle,pad=0.3', facecolor=color, 
                                  edgecolor='white', linewidth=1.5, alpha=0.9),
-                        ha='center', va='center', zorder=10)
+                        ha='center', va='center', zorder=10, rotation=0)
                 
-                # Add angle arc from origin for each vector
+                # Add angle arc from starting point of each vector
                 if abs(v.angle) > 0.1:  # Only draw if angle is significant
-                    arc_radius = max_val * 0.12 * (0.7 + i * 0.15)  # Increasing radius for each vector
+                    arc_radius = max_val * 0.1 * (0.8 + i * 0.2)  # Increasing radius for each vector
                     theta = np.linspace(0, np.radians(v.angle), 50)
                     arc_x = cumulative_x + arc_radius * np.cos(theta)
                     arc_y = cumulative_y + arc_radius * np.sin(theta)
-                    ax.plot(arc_x, arc_y, color=color, linewidth=1.5, zorder=2)
+                    ax.plot(arc_x, arc_y, color=color, linewidth=1.5, zorder=2, alpha=0.7)
                     
-                    # Add angle label (keep it upright)
+                    # Add angle label (always upright, positioned smartly)
                     label_angle_rad = np.radians(v.angle * 0.5)
-                    label_radius = arc_radius * 1.2
+                    label_radius = arc_radius * 1.3
                     label_x = cumulative_x + label_radius * np.cos(label_angle_rad)
                     label_y = cumulative_y + label_radius * np.sin(label_angle_rad)
                     ax.text(label_x, label_y, f'{v.angle:.0f}°', 
-                            fontsize=8, color=color, fontweight='bold',
-                            bbox=dict(boxstyle='round,pad=0.2', facecolor='white', 
-                                     edgecolor=color, linewidth=1, alpha=0.9),
-                            ha='center', va='center', zorder=10)
+                            fontsize=7, color=color, fontweight='bold',
+                            bbox=dict(boxstyle='round,pad=0.15', facecolor='white', 
+                                     edgecolor=color, linewidth=0.8, alpha=0.9),
+                            ha='center', va='center', zorder=10, rotation=0)
                 
                 # Add dot at tip
                 tip_x = cumulative_x + v.x
                 tip_y = cumulative_y + v.y
-                ax.plot(tip_x, tip_y, 'o', color=color, markersize=6, zorder=4)
+                ax.plot(tip_x, tip_y, 'o', color=color, markersize=5, zorder=4)
                 
                 cumulative_x += v.x
                 cumulative_y += v.y
@@ -285,15 +284,28 @@ if calculate_btn or 'last_result' in st.session_state:
         
         ax.set_xlabel('X (N)', fontsize=11, color=st.session_state.theme.text_color, fontweight='600')
         ax.set_ylabel('Y (N)', fontsize=11, color=st.session_state.theme.text_color, fontweight='600')
-        title = f'Vector Addition - {method} Method'
-        ax.set_title(title, fontsize=13, fontweight='bold',
-                    color=st.session_state.theme.text_color, pad=15)
-        ax.tick_params(colors=st.session_state.theme.text_color)
         
-        # Compact legend
-        legend = ax.legend(loc='upper right', fontsize=8, framealpha=0.95,
-                          edgecolor=st.session_state.theme.text_color,
-                          borderpad=0.4, labelspacing=0.3, handlelength=1.5, handletextpad=0.5)
+        # Create title with legend info inline
+        if method == "Polygon (Tip-to-Tail)":
+            # Build horizontal legend text
+            legend_parts = []
+            for i, v in enumerate(vector_list):
+                subscript = chr(0x2080 + i + 1) if i < 10 else str(i + 1)
+                legend_parts.append(f'F{subscript}={v.mag:.1f}N@{v.angle:.0f}°')
+            legend_parts.append(f'FR={r.mag:.1f}N@{r.angle:.1f}°')
+            title = f'Vector Addition - {method}\n' + ' | '.join(legend_parts)
+            ax.set_title(title, fontsize=11, fontweight='bold',
+                        color=st.session_state.theme.text_color, pad=10)
+        else:
+            title = f'Vector Addition - {method} Method'
+            ax.set_title(title, fontsize=13, fontweight='bold',
+                        color=st.session_state.theme.text_color, pad=15)
+            # Keep legend for parallelogram
+            legend = ax.legend(loc='upper right', fontsize=8, framealpha=0.95,
+                              edgecolor=st.session_state.theme.text_color,
+                              borderpad=0.4, labelspacing=0.3, handlelength=1.5, handletextpad=0.5)
+        
+        ax.tick_params(colors=st.session_state.theme.text_color)
         
         fig.tight_layout()
         st.pyplot(fig, width='stretch')
