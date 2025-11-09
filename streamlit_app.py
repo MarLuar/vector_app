@@ -101,14 +101,14 @@ if calculate_btn or 'last_result' in st.session_state:
         st.session_state.history.add(f1_mag, f1_angle, f2_mag, f2_angle, scale, r)
         st.session_state.last_result = (f1, f2, r, scale)
         
-        # Results section
-        col1, col2 = st.columns([2, 1])
+        # Results section with 3 columns
+        col1, col2, col3 = st.columns([1.4, 0.8, 1.0])
         
         with col1:
             st.subheader("Vector Visualization")
             
             # Create plot
-            fig = Figure(figsize=(10, 8), dpi=100, facecolor=st.session_state.theme.background_color)
+            fig = Figure(figsize=(8, 7), dpi=100, facecolor=st.session_state.theme.background_color)
             ax = fig.add_subplot(111, facecolor=st.session_state.theme.background_color)
             
             # Calculate max value for scaling
@@ -183,7 +183,7 @@ if calculate_btn or 'last_result' in st.session_state:
                 )
         
         with col2:
-            st.subheader("Resultant (FR)")
+            st.subheader("Resultant")
             
             # Result metrics
             st.metric("Magnitude", f"{r.mag:.2f} N")
@@ -195,10 +195,9 @@ if calculate_btn or 'last_result' in st.session_state:
             st.subheader("Components")
             st.write(f"**X:** {r.x:.2f} N")
             st.write(f"**Y:** {r.y:.2f} N")
-            
-            st.divider()
-            
-            st.subheader("Solution")
+        
+        with col3:
+            st.subheader("Direct Solution")
             from vector_addition import generate_direct_solution
             solution_text = generate_direct_solution(f1, f2, r, scale)
             st.code(solution_text, language=None)
@@ -208,8 +207,8 @@ if calculate_btn or 'last_result' in st.session_state:
             st.divider()
             st.subheader("Detailed Analytical Solution")
             from vector_addition import generate_solution_text
-            solution_text = generate_solution_text(f1, f2, r, scale)
-            st.code(solution_text, language=None)
+            detailed_solution_text = generate_solution_text(f1, f2, r, scale)
+            st.code(detailed_solution_text, language=None)
         
         # History
         if len(st.session_state.history) > 1:
