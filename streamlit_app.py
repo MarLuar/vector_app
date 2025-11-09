@@ -31,6 +31,8 @@ if 'history' not in st.session_state:
     st.session_state.history = VectorHistory()
 if 'theme' not in st.session_state:
     st.session_state.theme = ColorTheme.ocean_theme()
+if 'num_forces' not in st.session_state:
+    st.session_state.num_forces = 2
 
 # Custom CSS for better mobile experience
 st.markdown("""
@@ -80,19 +82,26 @@ with st.sidebar:
     
     st.divider()
     
-    # Force 1
-    st.subheader("Force 1 (F₁)")
-    f1_mag = st.number_input("Magnitude (N):", min_value=0.0, value=50.0, step=1.0, key="f1_mag")
-    f1_angle = st.number_input("Angle (°):", min_value=0.0, max_value=360.0, value=30.0, step=1.0, key="f1_angle")
+    # Number of forces (only for polygon method)
+    if method == "Polygon (Tip-to-Tail)":
+        st.subheader("Number of Forces")
+        num_forces = st.number_input("How many forces?", min_value=2, max_value=10, value=st.session_state.num_forces, step=1, key="num_forces_input")
+        st.session_state.num_forces = num_forces
+        st.divider()
+    else:
+        num_forces = 2
     
-    st.divider()
+    # Dynamic force inputs
+    forces = []
+    for i in range(num_forces):
+        st.subheader(f"Force {i+1} (F�{i+1})")
+        mag = st.number_input(f"Magnitude (N):", min_value=0.0, value=50.0 if i == 0 else 40.0, step=1.0, key=f"f{i+1}_mag")
+        angle = st.number_input(f"Angle (°):", min_value=0.0, max_value=360.0, value=30.0 if i == 0 else 120.0 if i == 1 else 0.0, step=1.0, key=f"f{i+1}_angle")
+        forces.append((mag, angle))
+        st.divider()
     
-    # Force 2
-    st.subheader("Force 2 (F₂)")
-    f2_mag = st.number_input("Magnitude (N):", min_value=0.0, value=40.0, step=1.0, key="f2_mag")
-    f2_angle = st.number_input("Angle (°):", min_value=0.0, max_value=360.0, value=120.0, step=1.0, key="f2_angle")
-    
-    st.divider()
+    # Remove last divider
+    st.markdown("")
     
     # Controls
     col1, col2 = st.columns(2)
@@ -104,12 +113,30 @@ with st.sidebar:
 # Main content area
 if calculate_btn or 'last_result' in st.session_state:
     try:
-        # Calculate vectors
-        f1, f2, r = add_vectors(f1_mag, f1_angle, f2_mag, f2_angle)
+        # Calculate vectors for all forces
+        from vector_addition import VectorData
         
-        # Add to history
-        st.session_state.history.add(f1_mag, f1_angle, f2_mag, f2_angle, scale, r)
-        st.session_state.last_result = (f1, f2, r, scale)
+        vector_list = []
+        resultant_x, resultant_y = 0.0, 0.0
+        
+        for i, (mag, angle) in enumerate(forces):
+            angle_rad = np.radians(angle)
+            vx = mag * np.cos(angle_rad)
+            vy = mag * np.sin(angle_rad)
+            vector_list.append(VectorData(vx, vy, mag, angle))
+            resultant_x += vx
+            resultant_y += vy
+        
+        # Calculate resultant magnitude and angle
+        r_mag = np.sqrt(resultant_x**2 + resultant_y**2)
+        r_angle = np.degrees(np.arctan2(resultant_y, resultant_x))
+        r = VectorData(resultant_x, resultant_y, r_mag, r_angle)
+        
+        # For history (only store first two forces for compatibility)
+        if len(forces) >= 2:
+            st.session_state.history.add(forces[0][0], forces[0][1], forces[1][0], forces[1][1], scale, r)
+        
+        st.session_state.last_result = (vector_list, r, scale, method)
         
         # Results section - Plot on top
         st.subheader("Vector Visualization")
@@ -120,57 +147,79 @@ if calculate_btn or 'last_result' in st.session_state:
         ax = fig.add_subplot(111, facecolor=st.session_state.theme.background_color)
         
         # Calculate max value for scaling
-        max_val = max(abs(f1.x), abs(f1.y), abs(f2.x), abs(f2.y), abs(r.x), abs(r.y))
+        all_vals = [0]
+        for v in vector_list:
+            all_vals.extend([abs(v.x), abs(v.y)])
+        all_vals.extend([abs(r.x), abs(r.y)])
+        max_val = max(all_vals)
         
-        # Draw vectors
-        f1_cm = f1.mag / scale
-        f2_cm = f2.mag / scale
-        r_cm = r.mag / scale
+        # Color palette for multiple vectors
+        colors = ['#5B8DEE', '#FF6B6B', '#9B59B6', '#F39C12', '#1ABC9C', '#E74C3C', '#3498DB', '#2ECC71', '#E67E22', '#95A5A6']
         
         if method == "Parallelogram":
-            # Parallelogram method: both vectors start at origin
-            draw_vector_with_labels(ax, 0, 0, f1.x, f1.y, '#5B8DEE', 'F₁',
-                                   f1.mag, f1.angle, f1_cm, max_val, theme=st.session_state.theme)
-            draw_vector_with_labels(ax, 0, 0, f2.x, f2.y, '#FF6B6B', 'F₂',
-                                   f2.mag, f2.angle, f2_cm, max_val, theme=st.session_state.theme)
-            draw_vector_with_labels(ax, 0, 0, r.x, r.y, '#28A745', 'FR',
-                                   r.mag, r.angle, r_cm, max_val, width=0.004,
-                                   highlight=True, theme=st.session_state.theme)
-            
-            # Construction lines for parallelogram
-            ax.plot([f1.x, f1.x + f2.x], [f1.y, f1.y + f2.y],
-                    color='#FF6B6B', linestyle='--', linewidth=1.5, alpha=0.4)
-            ax.plot([f2.x, f2.x + f1.x], [f2.y, f2.y + f1.y],
-                    color='#5B8DEE', linestyle='--', linewidth=1.5, alpha=0.4)
+            # Parallelogram method: only works for 2 vectors
+            if len(vector_list) == 2:
+                f1, f2 = vector_list[0], vector_list[1]
+                f1_cm = f1.mag / scale
+                f2_cm = f2.mag / scale
+                r_cm = r.mag / scale
+                
+                draw_vector_with_labels(ax, 0, 0, f1.x, f1.y, colors[0], 'F₁',
+                                       f1.mag, f1.angle, f1_cm, max_val, theme=st.session_state.theme)
+                draw_vector_with_labels(ax, 0, 0, f2.x, f2.y, colors[1], 'F₂',
+                                       f2.mag, f2.angle, f2_cm, max_val, theme=st.session_state.theme)
+                draw_vector_with_labels(ax, 0, 0, r.x, r.y, '#28A745', 'FR',
+                                       r.mag, r.angle, r_cm, max_val, width=0.004,
+                                       highlight=True, theme=st.session_state.theme)
+                
+                # Construction lines for parallelogram
+                ax.plot([f1.x, f1.x + f2.x], [f1.y, f1.y + f2.y],
+                        color=colors[1], linestyle='--', linewidth=1.5, alpha=0.4)
+                ax.plot([f2.x, f2.x + f1.x], [f2.y, f2.y + f1.y],
+                        color=colors[0], linestyle='--', linewidth=1.5, alpha=0.4)
+                
+                # Angle arcs for parallelogram
+                draw_angle_arc(ax, f1.angle, colors[0], max_val, ARC_F1_RADIUS_RATIO, theme=st.session_state.theme)
+                draw_angle_arc(ax, f2.angle, colors[1], max_val, ARC_F2_RADIUS_RATIO, theme=st.session_state.theme)
         
         else:  # Polygon (Tip-to-Tail) method
-            # First vector starts at origin
-            draw_vector_with_labels(ax, 0, 0, f1.x, f1.y, '#5B8DEE', 'F₁',
-                                   f1.mag, f1.angle, f1_cm, max_val, theme=st.session_state.theme)
-            # Second vector starts at tip of first
-            draw_vector_with_labels(ax, f1.x, f1.y, f2.x, f2.y, '#FF6B6B', 'F₂',
-                                   f2.mag, f2.angle, f2_cm, max_val, theme=st.session_state.theme)
-            # Resultant from origin to final tip
+            # Draw vectors tip-to-tail
+            cumulative_x, cumulative_y = 0.0, 0.0
+            
+            for i, v in enumerate(vector_list):
+                v_cm = v.mag / scale
+                subscript = chr(0x2080 + i + 1) if i < 10 else str(i + 1)
+                color = colors[i % len(colors)]
+                
+                draw_vector_with_labels(ax, cumulative_x, cumulative_y, v.x, v.y, color, f'F{subscript}',
+                                       v.mag, v.angle, v_cm, max_val, theme=st.session_state.theme)
+                
+                # Draw angle arc only for first vector
+                if i == 0:
+                    draw_angle_arc(ax, v.angle, color, max_val, ARC_F1_RADIUS_RATIO, theme=st.session_state.theme)
+                
+                cumulative_x += v.x
+                cumulative_y += v.y
+            
+            # Draw resultant
+            r_cm = r.mag / scale
             draw_vector_with_labels(ax, 0, 0, r.x, r.y, '#28A745', 'FR',
                                    r.mag, r.angle, r_cm, max_val, width=0.004,
                                    highlight=True, theme=st.session_state.theme)
-        
-        # Angle arcs
-        if method == "Parallelogram":
-            # In parallelogram, show all angles from origin
-            draw_angle_arc(ax, f1.angle, '#5B8DEE', max_val, ARC_F1_RADIUS_RATIO, theme=st.session_state.theme)
-            draw_angle_arc(ax, f2.angle, '#FF6B6B', max_val, ARC_F2_RADIUS_RATIO, theme=st.session_state.theme)
-        else:
-            # In polygon, only show F1 angle from origin (F2 is tip-to-tail)
-            draw_angle_arc(ax, f1.angle, '#5B8DEE', max_val, ARC_F1_RADIUS_RATIO, theme=st.session_state.theme)
         
         # Always show resultant angle
         draw_angle_arc(ax, r.angle, '#28A745', max_val, ARC_FR_RADIUS_RATIO,
                       linewidth=2.5, highlight=True, theme=st.session_state.theme)
         
         # Styling
-        x_vals = [0, f1.x, f2.x, r.x]
-        y_vals = [0, f1.y, f2.y, r.y]
+        x_vals = [0, r.x]
+        y_vals = [0, r.y]
+        cumulative_x, cumulative_y = 0.0, 0.0
+        for v in vector_list:
+            x_vals.extend([v.x, cumulative_x])
+            y_vals.extend([v.y, cumulative_y])
+            cumulative_x += v.x
+            cumulative_y += v.y
         x_min, x_max = min(x_vals), max(x_vals)
         y_min, y_max = min(y_vals), max(y_vals)
         
@@ -233,15 +282,21 @@ if calculate_btn or 'last_result' in st.session_state:
         
         with col_right:
             st.subheader("Direct Solution")
-            solution_text = generate_direct_solution(f1, f2, r, scale)
-            st.code(solution_text, language=None)
+            if len(vector_list) >= 2:
+                solution_text = generate_direct_solution(vector_list[0], vector_list[1], r, scale)
+                st.code(solution_text, language=None)
+            else:
+                st.write("Solution text available for 2+ forces")
         
         # Detailed solution panel
         if show_solution:
             st.divider()
             st.subheader("Detailed Analytical Solution")
-            detailed_solution_text = generate_solution_text(f1, f2, r, scale)
-            st.code(detailed_solution_text, language=None)
+            if len(vector_list) >= 2:
+                detailed_solution_text = generate_solution_text(vector_list[0], vector_list[1], r, scale)
+                st.code(detailed_solution_text, language=None)
+            else:
+                st.write("Detailed solution available for 2+ forces")
         
         # History
         if len(st.session_state.history) > 1:
