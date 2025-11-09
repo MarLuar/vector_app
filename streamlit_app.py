@@ -14,7 +14,7 @@ import numpy as np
 from vector_addition import (
     add_vectors, ColorTheme, VectorHistory,
     draw_vector_with_labels, draw_angle_arc,
-    generate_solution_text,
+    generate_solution_text, generate_direct_solution,
     PADDING_RATIO, MIN_NEGATIVE_SPACE_RATIO,
     ARC_F1_RADIUS_RATIO, ARC_F2_RADIUS_RATIO, ARC_FR_RADIUS_RATIO
 )
@@ -200,7 +200,6 @@ if calculate_btn or 'last_result' in st.session_state:
         
         with col_right:
             st.subheader("Direct Solution")
-            from vector_addition import generate_direct_solution
             solution_text = generate_direct_solution(f1, f2, r, scale)
             st.code(solution_text, language=None)
         
@@ -208,7 +207,6 @@ if calculate_btn or 'last_result' in st.session_state:
         if show_solution:
             st.divider()
             st.subheader("Detailed Analytical Solution")
-            from vector_addition import generate_solution_text
             detailed_solution_text = generate_solution_text(f1, f2, r, scale)
             st.code(detailed_solution_text, language=None)
         
