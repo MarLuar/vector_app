@@ -198,12 +198,10 @@ if calculate_btn or 'last_result' in st.session_state:
                 # Add force label near the middle of the vector
                 mid_x = cumulative_x + v.x * 0.5
                 mid_y = cumulative_y + v.y * 0.5
-                # Rotate 180° for negative angles or downward vectors to keep readable
-                label_rotation = 180 if (v.angle < -90 or v.angle > 90) else 0
+                # Rotate 180° for left-pointing vectors to keep readable
+                label_rotation = 180 if (v.angle > 90 and v.angle < 270) else 0
                 ax.text(mid_x, mid_y, f'F{subscript}', 
-                        fontsize=9, color='white', fontweight='bold',
-                        bbox=dict(boxstyle='circle,pad=0.3', facecolor=color, 
-                                 edgecolor='white', linewidth=1.5, alpha=0.9),
+                        fontsize=10, color=color, fontweight='bold',
                         ha='center', va='center', zorder=10, rotation=label_rotation)
                 
                 # Add angle arc from starting point of each vector
@@ -237,22 +235,18 @@ if calculate_btn or 'last_result' in st.session_state:
                       color='#28A745', width=0.004, 
                       label=f'FR = {r.mag:.2f}N, θ = {r.angle:.2f}°', zorder=5)
             
-            # Add FR circle label near the vector
+            # Add FR label near the vector (no background)
             r_label_x = r.x * 0.35
             r_label_y = r.y * 0.35
             ax.text(r_label_x, r_label_y, 'FR', 
-                    fontsize=10, color='white', fontweight='bold',
-                    bbox=dict(boxstyle='circle,pad=0.35', facecolor='#28A745', 
-                             edgecolor='white', linewidth=2, alpha=0.95),
+                    fontsize=11, color='#28A745', fontweight='bold',
                     ha='center', va='center', zorder=10)
             
-            # Add magnitude label for resultant
+            # Add magnitude label for resultant (no background)
             r_mid_x = r.x * 0.65
             r_mid_y = r.y * 0.65
             ax.text(r_mid_x, r_mid_y, f'{r_cm:.2f} cm', 
                     fontsize=10, color='#28A745', fontweight='bold',
-                    bbox=dict(boxstyle='round,pad=0.25', facecolor='yellow', 
-                             edgecolor='#28A745', linewidth=2, alpha=0.95),
                     ha='center', va='center', zorder=10)
         
         # Always show resultant angle
