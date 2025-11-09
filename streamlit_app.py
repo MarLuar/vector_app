@@ -101,89 +101,91 @@ if calculate_btn or 'last_result' in st.session_state:
         st.session_state.history.add(f1_mag, f1_angle, f2_mag, f2_angle, scale, r)
         st.session_state.last_result = (f1, f2, r, scale)
         
-        # Results section with 3 columns
-        col1, col2, col3 = st.columns([1.4, 0.8, 1.0])
+        # Results section - Plot on top
+        st.subheader("Vector Visualization")
         
-        with col1:
-            st.subheader("Vector Visualization")
-            
-            # Create plot
-            fig = Figure(figsize=(8, 7), dpi=100, facecolor=st.session_state.theme.background_color)
-            ax = fig.add_subplot(111, facecolor=st.session_state.theme.background_color)
-            
-            # Calculate max value for scaling
-            max_val = max(abs(f1.x), abs(f1.y), abs(f2.x), abs(f2.y), abs(r.x), abs(r.y))
-            
-            # Draw vectors
-            f1_cm = f1.mag / scale
-            f2_cm = f2.mag / scale
-            r_cm = r.mag / scale
-            
-            draw_vector_with_labels(ax, 0, 0, f1.x, f1.y, '#5B8DEE', 'F₁',
-                                   f1.mag, f1.angle, f1_cm, max_val, theme=st.session_state.theme)
-            draw_vector_with_labels(ax, 0, 0, f2.x, f2.y, '#FF6B6B', 'F₂',
-                                   f2.mag, f2.angle, f2_cm, max_val, theme=st.session_state.theme)
-            draw_vector_with_labels(ax, 0, 0, r.x, r.y, '#28A745', 'FR',
-                                   r.mag, r.angle, r_cm, max_val, width=0.004,
-                                   highlight=True, theme=st.session_state.theme)
-            
-            # Construction lines
-            ax.plot([f1.x, f1.x + f2.x], [f1.y, f1.y + f2.y],
-                    color='#FF6B6B', linestyle='--', linewidth=1.5, alpha=0.4)
-            ax.plot([f2.x, f2.x + f1.x], [f2.y, f2.y + f1.y],
-                    color='#5B8DEE', linestyle='--', linewidth=1.5, alpha=0.4)
-            
-            # Angle arcs
-            draw_angle_arc(ax, f1.angle, '#5B8DEE', max_val, ARC_F1_RADIUS_RATIO, theme=st.session_state.theme)
-            draw_angle_arc(ax, f2.angle, '#FF6B6B', max_val, ARC_F2_RADIUS_RATIO, theme=st.session_state.theme)
-            draw_angle_arc(ax, r.angle, '#28A745', max_val, ARC_FR_RADIUS_RATIO,
-                          linewidth=2.5, highlight=True, theme=st.session_state.theme)
-            
-            # Styling
-            x_vals = [0, f1.x, f2.x, r.x]
-            y_vals = [0, f1.y, f2.y, r.y]
-            x_min, x_max = min(x_vals), max(x_vals)
-            y_min, y_max = min(y_vals), max(y_vals)
-            
-            padding = max_val * PADDING_RATIO
-            min_neg_space = max_val * MIN_NEGATIVE_SPACE_RATIO
-            
-            ax.set_xlim(min(x_min - padding, -min_neg_space), x_max + padding)
-            ax.set_ylim(min(y_min - padding, -min_neg_space), y_max + padding)
-            ax.set_aspect('equal')
-            ax.set_facecolor(st.session_state.theme.background_color)
-            ax.grid(True, alpha=0.3, color=st.session_state.theme.grid_color, linestyle='-', linewidth=0.5)
-            ax.axhline(y=0, color=st.session_state.theme.grid_color, linewidth=1.5, zorder=2)
-            ax.axvline(x=0, color=st.session_state.theme.grid_color, linewidth=1.5, zorder=2)
-            
-            ax.set_xlabel('X (N)', fontsize=11, color=st.session_state.theme.text_color, fontweight='600')
-            ax.set_ylabel('Y (N)', fontsize=11, color=st.session_state.theme.text_color, fontweight='600')
-            ax.set_title('Vector Addition Visualization', fontsize=13, fontweight='bold',
-                        color=st.session_state.theme.text_color, pad=15)
-            ax.tick_params(colors=st.session_state.theme.text_color)
-            
-            legend = ax.legend(loc='upper right', fontsize=10, framealpha=0.95,
-                              edgecolor=st.session_state.theme.text_color)
-            
-            fig.tight_layout()
-            st.pyplot(fig)
-            
-            # Export button
-            if st.button("Download Plot (PNG)", use_container_width=True):
-                from io import BytesIO
-                buf = BytesIO()
-                fig.savefig(buf, format='png', dpi=300, bbox_inches='tight')
-                buf.seek(0)
-                st.download_button(
-                    label="Click to Download",
-                    data=buf,
-                    file_name="vector_plot.png",
-                    mime="image/png",
-                    use_container_width=True
-                )
+        # Create plot
+        fig = Figure(figsize=(12, 7), dpi=100, facecolor=st.session_state.theme.background_color)
+        ax = fig.add_subplot(111, facecolor=st.session_state.theme.background_color)
         
-        with col2:
-            st.subheader("Resultant")
+        # Calculate max value for scaling
+        max_val = max(abs(f1.x), abs(f1.y), abs(f2.x), abs(f2.y), abs(r.x), abs(r.y))
+        
+        # Draw vectors
+        f1_cm = f1.mag / scale
+        f2_cm = f2.mag / scale
+        r_cm = r.mag / scale
+        
+        draw_vector_with_labels(ax, 0, 0, f1.x, f1.y, '#5B8DEE', 'F₁',
+                               f1.mag, f1.angle, f1_cm, max_val, theme=st.session_state.theme)
+        draw_vector_with_labels(ax, 0, 0, f2.x, f2.y, '#FF6B6B', 'F₂',
+                               f2.mag, f2.angle, f2_cm, max_val, theme=st.session_state.theme)
+        draw_vector_with_labels(ax, 0, 0, r.x, r.y, '#28A745', 'FR',
+                               r.mag, r.angle, r_cm, max_val, width=0.004,
+                               highlight=True, theme=st.session_state.theme)
+        
+        # Construction lines
+        ax.plot([f1.x, f1.x + f2.x], [f1.y, f1.y + f2.y],
+                color='#FF6B6B', linestyle='--', linewidth=1.5, alpha=0.4)
+        ax.plot([f2.x, f2.x + f1.x], [f2.y, f2.y + f1.y],
+                color='#5B8DEE', linestyle='--', linewidth=1.5, alpha=0.4)
+        
+        # Angle arcs
+        draw_angle_arc(ax, f1.angle, '#5B8DEE', max_val, ARC_F1_RADIUS_RATIO, theme=st.session_state.theme)
+        draw_angle_arc(ax, f2.angle, '#FF6B6B', max_val, ARC_F2_RADIUS_RATIO, theme=st.session_state.theme)
+        draw_angle_arc(ax, r.angle, '#28A745', max_val, ARC_FR_RADIUS_RATIO,
+                      linewidth=2.5, highlight=True, theme=st.session_state.theme)
+        
+        # Styling
+        x_vals = [0, f1.x, f2.x, r.x]
+        y_vals = [0, f1.y, f2.y, r.y]
+        x_min, x_max = min(x_vals), max(x_vals)
+        y_min, y_max = min(y_vals), max(y_vals)
+        
+        padding = max_val * PADDING_RATIO
+        min_neg_space = max_val * MIN_NEGATIVE_SPACE_RATIO
+        
+        ax.set_xlim(min(x_min - padding, -min_neg_space), x_max + padding)
+        ax.set_ylim(min(y_min - padding, -min_neg_space), y_max + padding)
+        ax.set_aspect('equal')
+        ax.set_facecolor(st.session_state.theme.background_color)
+        ax.grid(True, alpha=0.3, color=st.session_state.theme.grid_color, linestyle='-', linewidth=0.5)
+        ax.axhline(y=0, color=st.session_state.theme.grid_color, linewidth=1.5, zorder=2)
+        ax.axvline(x=0, color=st.session_state.theme.grid_color, linewidth=1.5, zorder=2)
+        
+        ax.set_xlabel('X (N)', fontsize=11, color=st.session_state.theme.text_color, fontweight='600')
+        ax.set_ylabel('Y (N)', fontsize=11, color=st.session_state.theme.text_color, fontweight='600')
+        ax.set_title('Vector Addition Visualization', fontsize=13, fontweight='bold',
+                    color=st.session_state.theme.text_color, pad=15)
+        ax.tick_params(colors=st.session_state.theme.text_color)
+        
+        legend = ax.legend(loc='upper right', fontsize=10, framealpha=0.95,
+                          edgecolor=st.session_state.theme.text_color)
+        
+        fig.tight_layout()
+        st.pyplot(fig)
+        
+        # Export button
+        if st.button("Download Plot (PNG)", use_container_width=True):
+            from io import BytesIO
+            buf = BytesIO()
+            fig.savefig(buf, format='png', dpi=300, bbox_inches='tight')
+            buf.seek(0)
+            st.download_button(
+                label="Click to Download",
+                data=buf,
+                file_name="vector_plot.png",
+                mime="image/png",
+                use_container_width=True
+            )
+        
+        st.divider()
+        
+        # Two columns below for analytical and direct solution
+        col_left, col_right = st.columns(2)
+        
+        with col_left:
+            st.subheader("Resultant & Components")
             
             # Result metrics
             st.metric("Magnitude", f"{r.mag:.2f} N")
@@ -196,7 +198,7 @@ if calculate_btn or 'last_result' in st.session_state:
             st.write(f"**X:** {r.x:.2f} N")
             st.write(f"**Y:** {r.y:.2f} N")
         
-        with col3:
+        with col_right:
             st.subheader("Direct Solution")
             from vector_addition import generate_direct_solution
             solution_text = generate_direct_solution(f1, f2, r, scale)
