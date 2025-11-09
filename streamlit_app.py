@@ -257,7 +257,7 @@ if calculate_btn or 'last_result' in st.session_state:
                           edgecolor=st.session_state.theme.text_color)
         
         fig.tight_layout()
-        st.pyplot(fig, use_container_width=True)
+        st.pyplot(fig, width='stretch')
         
         # Export button
         if st.button("Download Plot (PNG)", use_container_width=True):
