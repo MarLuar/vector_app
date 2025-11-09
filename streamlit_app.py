@@ -183,7 +183,7 @@ if calculate_btn or 'last_result' in st.session_state:
                 draw_angle_arc(ax, f2.angle, colors[1], max_val, ARC_F2_RADIUS_RATIO, theme=st.session_state.theme)
         
         else:  # Polygon (Tip-to-Tail) method
-            # Draw vectors tip-to-tail
+            # Draw vectors tip-to-tail with simplified labels
             cumulative_x, cumulative_y = 0.0, 0.0
             
             for i, v in enumerate(vector_list):
@@ -191,21 +191,33 @@ if calculate_btn or 'last_result' in st.session_state:
                 subscript = chr(0x2080 + i + 1) if i < 10 else str(i + 1)
                 color = colors[i % len(colors)]
                 
-                draw_vector_with_labels(ax, cumulative_x, cumulative_y, v.x, v.y, color, f'F{subscript}',
-                                       v.mag, v.angle, v_cm, max_val, theme=st.session_state.theme)
+                # Draw arrow only (no labels on arrows for cleaner look)
+                ax.quiver(cumulative_x, cumulative_y, v.x, v.y, angles='xy', scale_units='xy', scale=1,
+                          color=color, width=0.003, 
+                          label=f'F{subscript} = {v.mag:.2f}N, θ = {v.angle:.2f}°', zorder=3)
                 
-                # Draw angle arc only for first vector
-                if i == 0:
-                    draw_angle_arc(ax, v.angle, color, max_val, ARC_F1_RADIUS_RATIO, theme=st.session_state.theme)
+                # Add simple label at tip
+                tip_x = cumulative_x + v.x
+                tip_y = cumulative_y + v.y
+                ax.plot(tip_x, tip_y, 'o', color=color, markersize=6, zorder=4)
                 
                 cumulative_x += v.x
                 cumulative_y += v.y
             
-            # Draw resultant
+            # Draw resultant with highlight
             r_cm = r.mag / scale
-            draw_vector_with_labels(ax, 0, 0, r.x, r.y, '#28A745', 'FR',
-                                   r.mag, r.angle, r_cm, max_val, width=0.004,
-                                   highlight=True, theme=st.session_state.theme)
+            ax.quiver(0, 0, r.x, r.y, angles='xy', scale_units='xy', scale=1,
+                      color='#28A745', width=0.004, 
+                      label=f'FR = {r.mag:.2f}N, θ = {r.angle:.2f}°', zorder=5)
+            
+            # Add prominent label for resultant
+            r_mid_x = r.x * 0.5
+            r_mid_y = r.y * 0.5
+            ax.text(r_mid_x, r_mid_y, f'{r_cm:.2f} cm', 
+                    fontsize=16, color='#28A745', fontweight='bold',
+                    bbox=dict(boxstyle='round,pad=0.5', facecolor='yellow', 
+                             edgecolor='#28A745', linewidth=2.5, alpha=0.95),
+                    ha='center', va='center', zorder=10)
         
         # Always show resultant angle
         draw_angle_arc(ax, r.angle, '#28A745', max_val, ARC_FR_RADIUS_RATIO,
