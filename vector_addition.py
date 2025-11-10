@@ -5,6 +5,13 @@ import json
 import matplotlib.pyplot as plt
 import numpy as np
 import matplotlib.patheffects as pe
+import matplotlib as mpl
+
+# Global font configuration with sensible fallbacks
+mpl.rcParams['font.family'] = ['Times New Roman', 'Times', 'Liberation Serif', 'Nimbus Roman', 'DejaVu Serif', 'serif']
+mpl.rcParams['font.serif'] = ['Times New Roman', 'Times', 'Liberation Serif', 'Nimbus Roman', 'DejaVu Serif']
+# Make math text consistent with serif
+mpl.rcParams['mathtext.fontset'] = 'dejavuserif'
 
 # Visual constants
 LABEL_POSITION_RATIO = 0.65  # Position along vector for measurement label
@@ -228,7 +235,8 @@ def format_measurement(value: float) -> str:
 def draw_vector_with_labels(ax, origin_x: float, origin_y: float, vx: float, vy: float,
                             color: str, label: str, mag: float, angle: float, 
                             cm_value: float, max_val: float, width: float = 0.003,
-                            highlight: bool = False, theme: Optional[ColorTheme] = None) -> None:
+                            highlight: bool = False, theme: Optional[ColorTheme] = None,
+                            unit: str = 'N') -> None:
     """
     Draw a vector arrow with measurement and label annotations.
     
@@ -238,16 +246,17 @@ def draw_vector_with_labels(ax, origin_x: float, origin_y: float, vx: float, vy:
         vx, vy: Vector components
         color: Arrow color
         label: Vector label (e.g., 'F₁', 'F₂', 'FR')
-        mag: Magnitude in Newtons
+        mag: Magnitude value
         angle: Angle in degrees
         cm_value: Length in centimeters
         max_val: Maximum value for offset calculations
         width: Arrow width
         highlight: Whether to highlight with yellow background
+        unit: Unit label for magnitude (e.g., 'N', 'm', 'm/s', 'm/s²')
     """
     # Draw arrow with 2 decimal places for magnitude and angle
     ax.quiver(origin_x, origin_y, vx, vy, angles='xy', scale_units='xy', scale=1,
-              color=color, width=width, label=f'{label} = {mag:.2f}N, θ = {angle:.2f}°')
+              color=color, width=width, label=f'{label} = {mag:.2f}{unit}, θ = {angle:.2f}°')
     
     # Calculate positions and offsets
     mid_x = origin_x + vx * LABEL_POSITION_RATIO
@@ -275,11 +284,18 @@ def draw_vector_with_labels(ax, origin_x: float, origin_y: float, vx: float, vy:
     
     label_bbox = dict(boxstyle='round,pad=0.3', facecolor=theme.background_color, edgecolor=color)
     if highlight:
-        label_bbox = dict(boxstyle='round,pad=0.3', facecolor=theme.background_color, 
-                         edgecolor=theme.resultant_color)
+        # Emphasize FR label with lighter styling and transparent background
+        label_bbox = dict(boxstyle='round,pad=0.25', facecolor='none',
+                          edgecolor=theme.resultant_color, linewidth=1.5)
     
-    ax.text(tip_x, tip_y, label, fontsize=13, color=color if not highlight else 'black',
-            fontweight='bold', bbox=label_bbox, zorder=10)
+    txt = ax.text(tip_x, tip_y, label,
+                  fontsize=13 if highlight else 13,
+                  color=color if not highlight else 'black',
+                  fontweight='bold', bbox=label_bbox, zorder=12)
+    
+    # Add white stroke outline for readability when highlighted (subtle)
+    if highlight:
+        txt.set_path_effects([pe.withStroke(linewidth=2, foreground='white')])
 
 
 def draw_angle_arc(ax, angle: float, color: str, max_val: float, 
@@ -304,7 +320,11 @@ def draw_angle_arc(ax, angle: float, color: str, max_val: float,
     theta = np.linspace(0, np.radians(angle), 50)
     arc_x = arc_radius * np.cos(theta)
     arc_y = arc_radius * np.sin(theta)
-    ax.plot(arc_x, arc_y, color=color, linewidth=linewidth)
+    line, = ax.plot(arc_x, arc_y, color=color, linewidth=max(linewidth, 2.5 if highlight else linewidth), zorder=6)
+    
+    # Emphasize arc with white stroke if highlighted (subtle)
+    if highlight:
+        line.set_path_effects([pe.withStroke(linewidth=max(linewidth + 1.5, 3.5), foreground='white')])
     
     # Add label at arc tip
     tip_angle_rad = np.radians(angle * ARC_LABEL_OFFSET_RATIO)
@@ -316,17 +336,26 @@ def draw_angle_arc(ax, angle: float, color: str, max_val: float,
         theme = ColorTheme.ocean_theme()
     
     precision = 1 if highlight else 0
-    angle_text = f'{angle:.{precision}f}°'
+    angle_text = f'θR = {angle:.{precision}f}°' if highlight else f'{angle:.{precision}f}°'
     
     # Keep text upright - rotate 180° for downward angles
     text_rotation = 0
     if angle < -90 or angle > 90:
         text_rotation = 180
     
-    # No background box, just colored text
-    ax.text(tip_x, tip_y, angle_text, fontsize=11, color=color,
-            fontweight='bold', ha='center', va='center',
-            rotation=text_rotation, zorder=10)
+    # Text styling
+    text_kwargs = dict(fontsize=12 if highlight else 11,
+                       color=color if not highlight else 'black',
+                       fontweight='bold', ha='center', va='center',
+                       rotation=text_rotation, zorder=12)
+    if highlight:
+        text_kwargs['bbox'] = dict(boxstyle='round,pad=0.25', facecolor='none',
+                                   edgecolor=color, linewidth=1.5)
+        # Draw a small tip marker for emphasis
+        ax.plot(tip_x, tip_y, 'o', color=color, markersize=4, zorder=13,
+                markeredgecolor='white', markeredgewidth=1.2)
+    
+    ax.text(tip_x, tip_y, angle_text, **text_kwargs)
 
 
 def quadrant(angle_deg: float) -> str:
@@ -364,45 +393,42 @@ def contribution_note(a: float, b: float, axis: str) -> str:
     return f'{lead} dominates {axis}'
 
 
-def generate_direct_solution(f1: VectorData, f2: VectorData, r: VectorData, scale: float) -> str:
+def generate_direct_solution(f1: VectorData, f2: VectorData, r: VectorData, scale: float, unit: str = 'N') -> str:
     """
     Generate a direct, straightforward solution without pedagogical explanation.
     
     Args:
-        f1, f2: Input force vector data
+        f1, f2: Input vector data
         r: Resultant vector data
-        scale: Scale factor (N per cm)
+        scale: Scale factor (unit per cm) [not used in text]
+        unit: Unit label to use in the text
         
     Returns:
         Formatted solution text
     """
-    r_cm = r.mag / scale
-    
     text = 'SOLUTION\n'
     text += '=' * 50 + '\n\n'
     
     text += 'GIVEN:\n'
-    text += f'  F₁ = {f1.mag} N @ {f1.angle}°\n'
-    text += f'  F₂ = {f2.mag} N @ {f2.angle}°\n'
-    text += f'  Scale: 1 cm = {scale} N\n\n'
+    text += f'  F₁ = {f1.mag} {unit} @ {f1.angle}°\n'
+    text += f'  F₂ = {f2.mag} {unit} @ {f2.angle}°\n\n'
     
     text += 'COMPONENTS:\n'
-    text += f'  F₁ₓ = {f1.mag} × cos({f1.angle}°) = {f1.x:.2f} N\n'
-    text += f'  F₁ᵧ = {f1.mag} × sin({f1.angle}°) = {f1.y:.2f} N\n'
-    text += f'  F₂ₓ = {f2.mag} × cos({f2.angle}°) = {f2.x:.2f} N\n'
-    text += f'  F₂ᵧ = {f2.mag} × sin({f2.angle}°) = {f2.y:.2f} N\n\n'
+    text += f'  F₁ₓ = {f1.mag} × cos({f1.angle}°) = {f1.x:.2f} {unit}\n'
+    text += f'  F₁ᵧ = {f1.mag} × sin({f1.angle}°) = {f1.y:.2f} {unit}\n'
+    text += f'  F₂ₓ = {f2.mag} × cos({f2.angle}°) = {f2.x:.2f} {unit}\n'
+    text += f'  F₂ᵧ = {f2.mag} × sin({f2.angle}°) = {f2.y:.2f} {unit}\n\n'
     
     text += 'RESULTANT COMPONENTS:\n'
-    text += f'  FRₓ = {f1.x:.2f} + {f2.x:.2f} = {r.x:.2f} N\n'
-    text += f'  FRᵧ = {f1.y:.2f} + {f2.y:.2f} = {r.y:.2f} N\n\n'
+    text += f'  FRₓ = {f1.x:.2f} + {f2.x:.2f} = {r.x:.2f} {unit}\n'
+    text += f'  FRᵧ = {f1.y:.2f} + {f2.y:.2f} = {r.y:.2f} {unit}\n\n'
     
     text += 'MAGNITUDE (Pythagorean Theorem):\n'
     text += f'  |FR| = √(FRₓ² + FRᵧ²)\n'
     text += f'       = √({r.x:.2f}² + {r.y:.2f}²)\n'
     text += f'       = √({r.x**2:.2f} + {r.y**2:.2f})\n'
     text += f'       = √{r.x**2 + r.y**2:.2f}\n'
-    text += f'       = {r.mag:.2f} N\n'
-    text += f'       = {format_measurement(r_cm)} cm\n\n'
+    text += f'       = {r.mag:.2f} {unit}\n\n'
     
     text += 'ANGLE (Inverse Tangent):\n'
     text += f'  θ = atan2({r.y:.2f}, {r.x:.2f})\n'
@@ -412,21 +438,19 @@ def generate_direct_solution(f1: VectorData, f2: VectorData, r: VectorData, scal
 
 
 def generate_solution_text(f1: VectorData, f2: VectorData, r: VectorData, 
-                          scale: float) -> str:
+                          scale: float, unit: str = 'N') -> str:
     """
     Generate detailed analytical solution text.
     
     Args:
-        f1, f2: Input force vector data
+        f1, f2: Input vector data
         r: Resultant vector data
-        scale: Scale factor (N per cm)
+        scale: Scale factor (unit per cm) [not used in text]
+        unit: Unit label to use in the text
         
     Returns:
         Formatted solution text
     """
-    f1_cm = f1.mag / scale
-    f2_cm = f2.mag / scale
-    r_cm = r.mag / scale
     
     angle_between = relative_angle(f1.angle, f2.angle)
     relation = 'reinforce each other' if angle_between < 90 else (
@@ -460,35 +484,67 @@ def generate_solution_text(f1: VectorData, f2: VectorData, r: VectorData,
     text += 'STEP 1: Break forces into x and y parts\n'
     text += '  WHY? Angled forces are hard to add. We split them into\n'
     text += '  horizontal (x) and vertical (y) parts first.\n\n'
-    text += f'  F₁: {f1.mag}N at {f1.angle}°\n'
-    text += f'    x-part: {f1.mag}×cos({f1.angle}°) = {f1.x:.2f}N (how much pushes right)\n'
-    text += f'    y-part: {f1.mag}×sin({f1.angle}°) = {f1.y:.2f}N (how much pushes up)\n\n'
-    text += f'  F₂: {f2.mag}N at {f2.angle}°\n'
-    text += f'    x-part: {f2.mag}×cos({f2.angle}°) = {f2.x:.2f}N\n'
-    text += f'    y-part: {f2.mag}×sin({f2.angle}°) = {f2.y:.2f}N\n\n'
+    text += f'  F₁: {f1.mag}{unit} at {f1.angle}°\n'
+    text += f'    x-part: {f1.mag}×cos({f1.angle}°) = {f1.x:.2f}{unit} (how much along +x)\n'
+    text += f'    y-part: {f1.mag}×sin({f1.angle}°) = {f1.y:.2f}{unit} (how much along +y)\n'
+    # Explain negatives for F1 components
+    if f1.x < -ZERO_THRESHOLD:
+        text += f"    Note: cos({f1.angle}°) < 0 (angle in {q1}), so the x-part is negative → points to -x.\n"
+    elif abs(f1.x) <= ZERO_THRESHOLD:
+        text += f"    Note: cos({f1.angle}°) ≈ 0 (angle near 90° or 270°), so x ≈ 0.\n"
+    if f1.y < -ZERO_THRESHOLD:
+        text += f"    Note: sin({f1.angle}°) < 0 (angle in lower half-plane), so the y-part is negative → points to -y.\n"
+    elif abs(f1.y) <= ZERO_THRESHOLD:
+        text += f"    Note: sin({f1.angle}°) ≈ 0 (angle near 0° or 180°), so y ≈ 0.\n"
+    text += "\n"
+    
+    text += f'  F₂: {f2.mag}{unit} at {f2.angle}°\n'
+    text += f'    x-part: {f2.mag}×cos({f2.angle}°) = {f2.x:.2f}{unit}\n'
+    text += f'    y-part: {f2.mag}×sin({f2.angle}°) = {f2.y:.2f}{unit}\n'
+    # Explain negatives for F2 components
+    if f2.x < -ZERO_THRESHOLD:
+        text += f"    Note: cos({f2.angle}°) < 0 (angle in {q2}), so the x-part is negative → points to -x.\n"
+    elif abs(f2.x) <= ZERO_THRESHOLD:
+        text += f"    Note: cos({f2.angle}°) ≈ 0 (angle near 90° or 270°), so x ≈ 0.\n"
+    if f2.y < -ZERO_THRESHOLD:
+        text += f"    Note: sin({f2.angle}°) < 0 (angle in lower half-plane), so the y-part is negative → points to -y.\n"
+    elif abs(f2.y) <= ZERO_THRESHOLD:
+        text += f"    Note: sin({f2.angle}°) ≈ 0 (angle near 0° or 180°), so y ≈ 0.\n"
+    text += "\n"
     
     text += 'STEP 2: Add all x\'s together, add all y\'s together\n'
     text += '  WHY? Now that forces are split, we can add same directions.\n'
     text += '  All horizontal forces combine to make total horizontal.\n'
     text += '  All vertical forces combine to make total vertical.\n\n'
-    text += f'  Total x: {f1.x:.2f} + {f2.x:.2f} = {r.x:.2f}N\n'
+    text += f'  Total x: {f1.x:.2f} + {f2.x:.2f} = {r.x:.2f}{unit}\n'
     if r.x > 0:
         text += f'           (positive = net push to the right)\n'
     elif r.x < 0:
+        # Explain why negative total x
+        pos_x = []
+        neg_x = []
+        pos_x.append(f"F₁ₓ={f1.x:.2f}") if f1.x > 0 else neg_x.append(f"F₁ₓ={f1.x:.2f}") if f1.x < 0 else None
+        pos_x.append(f"F₂ₓ={f2.x:.2f}") if f2.x > 0 else neg_x.append(f"F₂ₓ={f2.x:.2f}") if f2.x < 0 else None
         text += f'           (negative = net push to the left)\n'
-    text += f'  Total y: {f1.y:.2f} + {f2.y:.2f} = {r.y:.2f}N\n'
+        text += f"           because negatives ({', '.join(neg_x) if neg_x else 'none'}) outweigh positives ({', '.join(pos_x) if pos_x else 'none'}).\n"
+    text += f'  Total y: {f1.y:.2f} + {f2.y:.2f} = {r.y:.2f}{unit}\n'
     if r.y > 0:
         text += f'           (positive = net push upward)\n'
     elif r.y < 0:
+        # Explain why negative total y
+        pos_y = []
+        neg_y = []
+        pos_y.append(f"F₁ᵧ={f1.y:.2f}") if f1.y > 0 else neg_y.append(f"F₁ᵧ={f1.y:.2f}") if f1.y < 0 else None
+        pos_y.append(f"F₂ᵧ={f2.y:.2f}") if f2.y > 0 else neg_y.append(f"F₂ᵧ={f2.y:.2f}") if f2.y < 0 else None
         text += f'           (negative = net push downward)\n'
+        text += f"           because negatives ({', '.join(neg_y) if neg_y else 'none'}) outweigh positives ({', '.join(pos_y) if pos_y else 'none'}).\n"
     text += '\n'
     
     text += 'STEP 3: Find the total strength (magnitude)\n'
     text += '  WHY? We have x and y parts, but need the actual force size.\n'
     text += '  Use Pythagorean theorem: diagonal of a right triangle.\n\n'
     text += f'  |FR| = √(x² + y²) = √({r.x:.2f}² + {r.y:.2f}²)\n'
-    text += f'       = {r.mag:.2f}N\n'
-    text += f'       = {format_measurement(r_cm)} cm (using scale: 1cm = {scale}N)\n\n'
+    text += f'       = {r.mag:.2f}{unit}\n\n'
     
     text += 'STEP 4: Find which direction it points\n'
     text += '  WHY? We know the strength, but need to know where it points.\n'
@@ -498,6 +554,8 @@ def generate_solution_text(f1: VectorData, f2: VectorData, r: VectorData,
     elif near_horizontal:
         text += '  NOTE: y≈0, so force is nearly horizontal (0° or 180°)\n'
     text += f'\n  θ = atan2({r.y:.2f}, {r.x:.2f}) = {r.angle:.2f}°\n'
+    if r.angle < 0:
+        text += '  Note: negative angle = clockwise from +x, happens because FRᵧ < 0 (below x-axis).\n'
     text += f'  Result: FR points to {qr}\n'
     if 0 <= r.angle < 90:
         text += '         (up and to the right)\n'
