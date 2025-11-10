@@ -230,7 +230,7 @@ with st.sidebar:
     # Dynamic force inputs
     forces = []
     for i in range(num_forces):
-        st.subheader(f"Force {i+1} (F�{i+1})")
+        st.subheader(f"Force {i+1} (F{i+1})")
         mag = st.number_input(f"Magnitude ({unit_label}):", min_value=0.0, value=0.0, step=1.0, key=f"f{i+1}_mag", on_change=_hide_result)
         angle = st.number_input(f"Angle (°):", min_value=0.0, max_value=360.0, value=0.0, step=1.0, key=f"f{i+1}_angle", on_change=_hide_result)
         forces.append((mag, angle))
