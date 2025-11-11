@@ -200,6 +200,14 @@ with st.sidebar:
         "Acceleration": "m/s²",
     }
     unit_label = units_map.get(quantity, "N")
+    # Variable symbol by quantity
+    var_symbols = {
+        "Force": "F",
+        "Displacement": "d",
+        "Velocity": "V",
+        "Acceleration": "a",
+    }
+    var_symbol = var_symbols.get(quantity, "F")
     
     # Method selection
     st.subheader("Visualization Method")
@@ -227,10 +235,11 @@ with st.sidebar:
     else:
         num_forces = 2
     
-    # Dynamic force inputs
+    # Dynamic inputs
     forces = []
     for i in range(num_forces):
-        st.subheader(f"Force {i+1} (F{i+1})")
+        sub = chr(0x2080 + (i + 1)) if (i + 1) < 10 else str(i + 1)
+        st.subheader(f"{quantity} {i+1} ({var_symbol}{sub})")
         mag = st.number_input(f"Magnitude ({unit_label}):", min_value=0.0, value=0.0, step=1.0, key=f"f{i+1}_mag", on_change=_hide_result)
         angle = st.number_input(f"Angle (°):", min_value=0.0, max_value=360.0, value=0.0, step=1.0, key=f"f{i+1}_angle", on_change=_hide_result)
         forces.append((mag, angle))
@@ -301,11 +310,11 @@ if calculate_btn:
                 f2_cm = f2.mag / scale
                 r_cm = r.mag / scale
                 
-                draw_vector_with_labels(ax, 0, 0, f1.x, f1.y, colors[0], 'F₁',
+                draw_vector_with_labels(ax, 0, 0, f1.x, f1.y, colors[0], f'{var_symbol}₁',
                                        f1.mag, f1.angle, f1_cm, max_val, theme=st.session_state.theme, unit=unit_label)
-                draw_vector_with_labels(ax, 0, 0, f2.x, f2.y, colors[1], 'F₂',
+                draw_vector_with_labels(ax, 0, 0, f2.x, f2.y, colors[1], f'{var_symbol}₂',
                                        f2.mag, f2.angle, f2_cm, max_val, theme=st.session_state.theme, unit=unit_label)
-                draw_vector_with_labels(ax, 0, 0, r.x, r.y, '#28A745', 'FR',
+                draw_vector_with_labels(ax, 0, 0, r.x, r.y, '#28A745', f'{var_symbol}R',
                                        r.mag, r.angle, r_cm, max_val, width=0.004,
                                        highlight=True, theme=st.session_state.theme, unit=unit_label)
                 
@@ -337,7 +346,7 @@ if calculate_btn:
                 mid_y = cumulative_y + v.y * 0.5
                 # Rotate 180° for left-pointing vectors to keep readable
                 label_rotation = 180 if (v.angle > 90 and v.angle < 270) else 0
-                ax.text(mid_x, mid_y, f'F{subscript}', 
+                ax.text(mid_x, mid_y, f'{var_symbol}{subscript}', 
                         fontsize=10, color=color, fontweight='bold',
                         ha='center', va='center', zorder=10, rotation=label_rotation)
                 
@@ -370,14 +379,14 @@ if calculate_btn:
             r_cm = r.mag / scale
             ax.quiver(0, 0, r.x, r.y, angles='xy', scale_units='xy', scale=1,
                       color='#28A745', width=0.004, 
-                      label=f'FR = {r.mag:.2f}{unit_label}, θ = {r.angle:.2f}°', zorder=5)
+                      label=f'{var_symbol}R = {r.mag:.2f}{unit_label}, θ = {r.angle:.2f}°', zorder=5)
             
             # Add FR label near the vector (no background)
             r_label_x = r.x * 0.35
             r_label_y = r.y * 0.35
             fr_bbox = dict(boxstyle='round,pad=0.25', facecolor='none',
                             edgecolor='#28A745', linewidth=1.5)
-            fr_text = ax.text(r_label_x, r_label_y, 'FR', 
+            fr_text = ax.text(r_label_x, r_label_y, f'{var_symbol}R', 
                     fontsize=12, color='black', fontweight='bold',
                     ha='center', va='center', zorder=12, bbox=fr_bbox)
             fr_text.set_path_effects([pe.withStroke(linewidth=2, foreground='white')])
@@ -416,8 +425,16 @@ if calculate_btn:
         ax.axhline(y=0, color=st.session_state.theme.grid_color, linewidth=1.5, zorder=2)
         ax.axvline(x=0, color=st.session_state.theme.grid_color, linewidth=1.5, zorder=2)
         
-        ax.set_xlabel(f'X ({unit_label})', fontsize=11, color=st.session_state.theme.text_color, fontweight='600')
-        ax.set_ylabel(f'Y ({unit_label})', fontsize=11, color=st.session_state.theme.text_color, fontweight='600')
+        # Map quantity type to variable symbol
+        var_symbols = {
+            "Force": "F",
+            "Displacement": "d",
+            "Velocity": "V",
+            "Acceleration": "a"
+        }
+        var_symbol = var_symbols.get(quantity, "F")
+        ax.set_xlabel(f'{var_symbol}ₓ ({unit_label})', fontsize=11, color=st.session_state.theme.text_color, fontweight='600')
+        ax.set_ylabel(f'{var_symbol}ᵧ ({unit_label})', fontsize=11, color=st.session_state.theme.text_color, fontweight='600')
         
         # Create title with legend info inline
         if method == "Polygon (Tip-to-Tail)":
@@ -425,8 +442,8 @@ if calculate_btn:
             legend_parts = []
             for i, v in enumerate(vector_list):
                 subscript = chr(0x2080 + i + 1) if i < 10 else str(i + 1)
-                legend_parts.append(f'F{subscript}={v.mag:.1f}{unit_label}@{v.angle:.0f}°')
-            legend_parts.append(f'FR={r.mag:.1f}{unit_label}@{r.angle:.1f}°')
+                legend_parts.append(f'{var_symbol}{subscript}={v.mag:.1f}{unit_label}@{v.angle:.0f}°')
+            legend_parts.append(f'{var_symbol}R={r.mag:.1f}{unit_label}@{r.angle:.1f}°')
             title = f'Vector Addition - {method}\n' + ' | '.join(legend_parts)
             ax.set_title(title, fontsize=11, fontweight='bold',
                         color=st.session_state.theme.text_color, pad=10)
@@ -459,10 +476,10 @@ if calculate_btn:
             st.session_state.setdefault(f'inline_f{i}_angle', st.session_state.get(f'f{i}_angle', 0.0))
             c1, c2 = st.columns(2)
             with c1:
-                st.number_input(f"F{i} Magnitude ({unit_label})", min_value=0.0, step=1.0,
+                st.number_input(f"{var_symbol}{i} Magnitude ({unit_label})", min_value=0.0, step=1.0,
                                 key=f'inline_f{i}_mag', on_change=_hide_result)
             with c2:
-                st.number_input(f"F{i} Angle (°)", min_value=0.0, max_value=360.0, step=1.0,
+                st.number_input(f"{var_symbol}{i} Angle (°)", min_value=0.0, max_value=360.0, step=1.0,
                                 key=f'inline_f{i}_angle', on_change=_hide_result)
         st.button("Apply Inline Changes", type="primary", use_container_width=True, on_click=_apply_inline_changes)
         
@@ -503,6 +520,13 @@ if calculate_btn:
             st.subheader("Direct Solution")
             if len(vector_list) >= 2:
                 solution_text = generate_direct_solution(vector_list[0], vector_list[1], r, scale, unit=unit_label)
+                # Replace F with chosen symbol in solution text
+                for a, b in [
+                    ('F₁ₓ', f'{var_symbol}₁ₓ'), ('F₁ᵧ', f'{var_symbol}₁ᵧ'), ('F₂ₓ', f'{var_symbol}₂ₓ'), ('F₂ᵧ', f'{var_symbol}₂ᵧ'),
+                    ('FRₓ', f'{var_symbol}Rₓ'), ('FRᵧ', f'{var_symbol}Rᵧ'),
+                    ('F₁', f'{var_symbol}₁'), ('F₂', f'{var_symbol}₂'), ('FR', f'{var_symbol}R')
+                ]:
+                    solution_text = solution_text.replace(a, b)
                 st.code(solution_text, language=None)
             else:
                 st.write("Solution text available for 2+ forces")
@@ -513,6 +537,12 @@ if calculate_btn:
             st.subheader("Detailed Analytical Solution")
             if len(vector_list) >= 2:
                 detailed_solution_text = generate_solution_text(vector_list[0], vector_list[1], r, scale, unit=unit_label)
+                for a, b in [
+                    ('F₁ₓ', f'{var_symbol}₁ₓ'), ('F₁ᵧ', f'{var_symbol}₁ᵧ'), ('F₂ₓ', f'{var_symbol}₂ₓ'), ('F₂ᵧ', f'{var_symbol}₂ᵧ'),
+                    ('FRₓ', f'{var_symbol}Rₓ'), ('FRᵧ', f'{var_symbol}Rᵧ'),
+                    ('F₁', f'{var_symbol}₁'), ('F₂', f'{var_symbol}₂'), ('FR', f'{var_symbol}R')
+                ]:
+                    detailed_solution_text = detailed_solution_text.replace(a, b)
                 st.code(detailed_solution_text, language=None)
             else:
                 st.write("Detailed solution available for 2+ forces")
@@ -523,9 +553,9 @@ if calculate_btn:
                 history = st.session_state.history.get_all()
                 for i, entry in enumerate(reversed(history[-10:])):  # Show last 10
                     st.text(
-                        f"{len(history)-i}. F₁={entry['f1_mag']}{unit_label}@{entry['f1_angle']}° | "
-                        f"F₂={entry['f2_mag']}{unit_label}@{entry['f2_angle']}° → "
-                        f"FR={entry['result']['mag']:.2f}{unit_label}@{entry['result']['angle']:.2f}°"
+                        f"{len(history)-i}. {var_symbol}₁={entry['f1_mag']}{unit_label}@{entry['f1_angle']}° | "
+                        f"{var_symbol}₂={entry['f2_mag']}{unit_label}@{entry['f2_angle']}° → "
+                        f"{var_symbol}R={entry['result']['mag']:.2f}{unit_label}@{entry['result']['angle']:.2f}°"
                     )
     
     except ValueError as e:
@@ -556,9 +586,9 @@ elif st.session_state.get('show_result') and 'last_result' in st.session_state:
         f1_cm = f1.mag / scale_to_use
         f2_cm = f2.mag / scale_to_use
         r_cm = r.mag / scale_to_use
-        draw_vector_with_labels(ax, 0, 0, f1.x, f1.y, colors[0], 'F₁', f1.mag, f1.angle, f1_cm, max_val, theme=st.session_state.theme, unit=unit_label)
-        draw_vector_with_labels(ax, 0, 0, f2.x, f2.y, colors[1], 'F₂', f2.mag, f2.angle, f2_cm, max_val, theme=st.session_state.theme, unit=unit_label)
-        draw_vector_with_labels(ax, 0, 0, r.x, r.y, '#28A745', 'FR', r.mag, r.angle, r_cm, max_val, width=0.004, highlight=True, theme=st.session_state.theme, unit=unit_label)
+        draw_vector_with_labels(ax, 0, 0, f1.x, f1.y, colors[0], f'{var_symbol}₁', f1.mag, f1.angle, f1_cm, max_val, theme=st.session_state.theme, unit=unit_label)
+        draw_vector_with_labels(ax, 0, 0, f2.x, f2.y, colors[1], f'{var_symbol}₂', f2.mag, f2.angle, f2_cm, max_val, theme=st.session_state.theme, unit=unit_label)
+        draw_vector_with_labels(ax, 0, 0, r.x, r.y, '#28A745', f'{var_symbol}R', r.mag, r.angle, r_cm, max_val, width=0.004, highlight=True, theme=st.session_state.theme, unit=unit_label)
         draw_angle_arc(ax, f1.angle, colors[0], max_val, ARC_F1_RADIUS_RATIO, theme=st.session_state.theme)
         draw_angle_arc(ax, f2.angle, colors[1], max_val, ARC_F2_RADIUS_RATIO, theme=st.session_state.theme)
     else:
@@ -570,15 +600,15 @@ elif st.session_state.get('show_result') and 'last_result' in st.session_state:
             mid_x = cumulative_x + v.x * 0.5
             mid_y = cumulative_y + v.y * 0.5
             label_rotation = 180 if (v.angle > 90 and v.angle < 270) else 0
-            ax.text(mid_x, mid_y, f'F{chr(0x2080 + i + 1) if i < 10 else str(i+1)}', fontsize=10, color=color, fontweight='bold', ha='center', va='center', zorder=10, rotation=label_rotation)
+            ax.text(mid_x, mid_y, f'{var_symbol}{chr(0x2080 + i + 1) if i < 10 else str(i+1)}', fontsize=10, color=color, fontweight='bold', ha='center', va='center', zorder=10, rotation=label_rotation)
             cumulative_x += v.x
             cumulative_y += v.y
         # Draw resultant
-        ax.quiver(0, 0, r.x, r.y, angles='xy', scale_units='xy', scale=1, color='#28A745', width=0.004, label=f'FR = {r.mag:.2f}{unit_label}, θ = {r.angle:.2f}°', zorder=5)
+        ax.quiver(0, 0, r.x, r.y, angles='xy', scale_units='xy', scale=1, color='#28A745', width=0.004, label=f'{var_symbol}R = {r.mag:.2f}{unit_label}, θ = {r.angle:.2f}°', zorder=5)
         r_label_x = r.x * 0.35
         r_label_y = r.y * 0.35
         fr_bbox = dict(boxstyle='round,pad=0.25', facecolor='none', edgecolor='#28A745', linewidth=1.5)
-        fr_text = ax.text(r_label_x, r_label_y, 'FR', fontsize=12, color='black', fontweight='bold', ha='center', va='center', zorder=12, bbox=fr_bbox)
+        fr_text = ax.text(r_label_x, r_label_y, f'{var_symbol}R', fontsize=12, color='black', fontweight='bold', ha='center', va='center', zorder=12, bbox=fr_bbox)
         
     # Add resultant angle arc emphasis
     draw_angle_arc(ax, r.angle, '#28A745', max_val, ARC_FR_RADIUS_RATIO, linewidth=2.5, highlight=True, theme=st.session_state.theme)
@@ -603,8 +633,16 @@ elif st.session_state.get('show_result') and 'last_result' in st.session_state:
     ax.grid(True, alpha=0.3, color=st.session_state.theme.grid_color, linestyle='-', linewidth=0.5)
     ax.axhline(y=0, color=st.session_state.theme.grid_color, linewidth=1.5, zorder=2)
     ax.axvline(x=0, color=st.session_state.theme.grid_color, linewidth=1.5, zorder=2)
-    ax.set_xlabel(f'X ({unit_label})', fontsize=11, color=st.session_state.theme.text_color, fontweight='600')
-    ax.set_ylabel(f'Y ({unit_label})', fontsize=11, color=st.session_state.theme.text_color, fontweight='600')
+    # Map quantity type to variable symbol
+    var_symbols = {
+        "Force": "F",
+        "Displacement": "d",
+        "Velocity": "V",
+        "Acceleration": "a"
+    }
+    var_symbol = var_symbols.get(quantity, "F")
+    ax.set_xlabel(f'{var_symbol}ₓ ({unit_label})', fontsize=11, color=st.session_state.theme.text_color, fontweight='600')
+    ax.set_ylabel(f'{var_symbol}ᵧ ({unit_label})', fontsize=11, color=st.session_state.theme.text_color, fontweight='600')
     ax.set_title('Vector Addition Visualization', fontsize=13, fontweight='bold', color=st.session_state.theme.text_color, pad=15)
     ax.tick_params(colors=st.session_state.theme.text_color)
 
@@ -623,10 +661,10 @@ elif st.session_state.get('show_result') and 'last_result' in st.session_state:
         st.session_state.setdefault(f'inline_f{i}_angle', st.session_state.get(f'f{i}_angle', 0.0))
         c1, c2 = st.columns(2)
         with c1:
-            st.number_input(f"F{i} Magnitude ({unit_label})", min_value=0.0, step=1.0,
+            st.number_input(f"{var_symbol}{i} Magnitude ({unit_label})", min_value=0.0, step=1.0,
                             key=f'inline_f{i}_mag', on_change=_hide_result)
         with c2:
-            st.number_input(f"F{i} Angle (°)", min_value=0.0, max_value=360.0, step=1.0,
+            st.number_input(f"{var_symbol}{i} Angle (°)", min_value=0.0, max_value=360.0, step=1.0,
                             key=f'inline_f{i}_angle', on_change=_hide_result)
     st.button("Apply Inline Changes", type="primary", use_container_width=True, on_click=_apply_inline_changes)
 
@@ -651,7 +689,7 @@ else:
     if method == "Parallelogram":
         for i, v in enumerate(vector_list[:2]):
             v_cm = v.mag / scale if scale else 0
-            draw_vector_with_labels(ax, 0, 0, v.x, v.y, colors[i % len(colors)], f'F{chr(0x2080 + i + 1) if i < 10 else str(i+1)}', v.mag, v.angle, v_cm, max_val, theme=st.session_state.theme, unit=unit_label)
+            draw_vector_with_labels(ax, 0, 0, v.x, v.y, colors[i % len(colors)], f'{var_symbol}{chr(0x2080 + i + 1) if i < 10 else str(i+1)}', v.mag, v.angle, v_cm, max_val, theme=st.session_state.theme, unit=unit_label)
             draw_angle_arc(ax, v.angle, colors[i % len(colors)], max_val, ARC_F1_RADIUS_RATIO if i == 0 else ARC_F2_RADIUS_RATIO, theme=st.session_state.theme)
     else:
         cumulative_x, cumulative_y = 0.0, 0.0
@@ -661,7 +699,7 @@ else:
             mid_x = cumulative_x + v.x * 0.5
             mid_y = cumulative_y + v.y * 0.5
             label_rotation = 180 if (v.angle > 90 and v.angle < 270) else 0
-            ax.text(mid_x, mid_y, f'F{chr(0x2080 + i + 1) if i < 10 else str(i+1)}', fontsize=10, color=color, fontweight='bold', ha='center', va='center', zorder=10, rotation=label_rotation)
+            ax.text(mid_x, mid_y, f'{var_symbol}{chr(0x2080 + i + 1) if i < 10 else str(i+1)}', fontsize=10, color=color, fontweight='bold', ha='center', va='center', zorder=10, rotation=label_rotation)
             cumulative_x += v.x
             cumulative_y += v.y
 
@@ -685,8 +723,16 @@ else:
     ax.grid(True, alpha=0.3, color=st.session_state.theme.grid_color, linestyle='-', linewidth=0.5)
     ax.axhline(y=0, color=st.session_state.theme.grid_color, linewidth=1.5, zorder=2)
     ax.axvline(x=0, color=st.session_state.theme.grid_color, linewidth=1.5, zorder=2)
-    ax.set_xlabel(f'X ({unit_label})', fontsize=11, color=st.session_state.theme.text_color, fontweight='600')
-    ax.set_ylabel(f'Y ({unit_label})', fontsize=11, color=st.session_state.theme.text_color, fontweight='600')
+    # Map quantity type to variable symbol
+    var_symbols = {
+        "Force": "F",
+        "Displacement": "d",
+        "Velocity": "V",
+        "Acceleration": "a"
+    }
+    var_symbol = var_symbols.get(quantity, "F")
+    ax.set_xlabel(f'{var_symbol}ₓ ({unit_label})', fontsize=11, color=st.session_state.theme.text_color, fontweight='600')
+    ax.set_ylabel(f'{var_symbol}ᵧ ({unit_label})', fontsize=11, color=st.session_state.theme.text_color, fontweight='600')
     ax.set_title('Vector Preview', fontsize=13, fontweight='bold', color=st.session_state.theme.text_color, pad=15)
     ax.tick_params(colors=st.session_state.theme.text_color)
 
@@ -705,10 +751,10 @@ else:
         st.session_state.setdefault(f'inline_f{i}_angle', st.session_state.get(f'f{i}_angle', 0.0))
         c1, c2 = st.columns(2)
         with c1:
-            st.number_input(f"F{i} Magnitude ({unit_label})", min_value=0.0, step=1.0,
+            st.number_input(f"{var_symbol}{i} Magnitude ({unit_label})", min_value=0.0, step=1.0,
                             key=f'inline_f{i}_mag', on_change=_hide_result)
         with c2:
-            st.number_input(f"F{i} Angle (°)", min_value=0.0, max_value=360.0, step=1.0,
+            st.number_input(f"{var_symbol}{i} Angle (°)", min_value=0.0, max_value=360.0, step=1.0,
                             key=f'inline_f{i}_angle', on_change=_hide_result)
     st.button("Apply Inline Changes", type="primary", use_container_width=True, on_click=_apply_inline_changes)
 

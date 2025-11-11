@@ -70,8 +70,8 @@ def create_vector_plot(scale, f1_mag, f1_angle, f2_mag, f2_angle, show_solution)
         ax.axhline(y=0, color=theme.grid_color, linewidth=1.5, zorder=2)
         ax.axvline(x=0, color=theme.grid_color, linewidth=1.5, zorder=2)
         
-        ax.set_xlabel('X (N)', fontsize=11, color=theme.text_color, fontweight='600')
-        ax.set_ylabel('Y (N)', fontsize=11, color=theme.text_color, fontweight='600')
+        ax.set_xlabel('Fₓ (N)', fontsize=11, color=theme.text_color, fontweight='600')
+        ax.set_ylabel('Fᵧ (N)', fontsize=11, color=theme.text_color, fontweight='600')
         ax.set_title('Vector Addition Visualization', fontsize=13, fontweight='bold',
                     color=theme.text_color, pad=15)
         ax.tick_params(colors=theme.text_color)

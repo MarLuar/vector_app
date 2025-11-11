@@ -76,8 +76,17 @@ def create_arc(angle_deg, radius, color, num_points=50):
     y = radius * np.sin(theta)
     return x.tolist(), y.tolist()
 
-def create_animated_vector_plot(f1, f2, r, scale, animate=True, unit: str = 'N'):
+def create_animated_vector_plot(f1, f2, r, scale, animate=True, unit: str = 'N', quantity: str = 'Force'):
     """Create interactive Plotly plot with animations"""
+    
+    # Map quantity type to variable symbol
+    var_symbols = {
+        "Force": "F",
+        "Displacement": "d",
+        "Velocity": "V",
+        "Acceleration": "a"
+    }
+    var_symbol = var_symbols.get(quantity, "F")
     
     # Calculate display values
     max_val = max(abs(f1.x), abs(f1.y), abs(f2.x), abs(f2.y), abs(r.x), abs(r.y))
@@ -101,9 +110,9 @@ def create_animated_vector_plot(f1, f2, r, scale, animate=True, unit: str = 'N')
             frame_data = []
             
             # Vector arrows
-            for vec, color, name in [(f1, '#5B8DEE', 'F₁'), (f2, '#FF6B6B', 'F₂'), 
-                                      (r, '#28A745', 'FR')]:
-                width = 6 if name == 'FR' else 4
+            for vec, color, name in [(f1, '#5B8DEE', f'{var_symbol}₁'), (f2, '#FF6B6B', f'{var_symbol}₂'), 
+                                      (r, '#28A745', f'{var_symbol}R')]:
+                width = 6 if name.endswith('R') else 4
                 frame_data.append(go.Scatter(
                     x=[0, vec.x * eased],
                     y=[0, vec.y * eased],
@@ -157,8 +166,8 @@ def create_animated_vector_plot(f1, f2, r, scale, animate=True, unit: str = 'N')
     static_data = []
     
     # Vectors
-    for vec, color, name in [(f1, '#5B8DEE', 'F₁'), (f2, '#FF6B6B', 'F₂'), (r, '#28A745', 'FR')]:
-        width = 6 if name == 'FR' else 4
+    for vec, color, name in [(f1, '#5B8DEE', f'{var_symbol}₁'), (f2, '#FF6B6B', f'{var_symbol}₂'), (r, '#28A745', f'{var_symbol}R')]:
+        width = 6 if name.endswith('R') else 4
         static_data.append(go.Scatter(
             x=[0, vec.x], y=[0, vec.y],
             mode='lines+markers',
@@ -206,7 +215,7 @@ def create_animated_vector_plot(f1, f2, r, scale, animate=True, unit: str = 'N')
     fr_label_x = r.x * 0.35
     fr_label_y = r.y * 0.35
     fig.add_annotation(
-        x=fr_label_x, y=fr_label_y, xref='x', yref='y', text='FR',
+        x=fr_label_x, y=fr_label_y, xref='x', yref='y', text=f'{var_symbol}R',
         showarrow=True, arrowhead=2, arrowsize=1, arrowwidth=1.5,
         ax=0, ay=0,
         font=dict(size=12, color='black', family='Times New Roman, Times, Liberation Serif, Nimbus Roman, DejaVu Serif, serif'),
@@ -242,12 +251,12 @@ def create_animated_vector_plot(f1, f2, r, scale, animate=True, unit: str = 'N')
         xaxis=dict(
             range=[min(x_min - padding, -min_neg), x_max + padding],
             zeroline=True, zerolinewidth=2, zerolinecolor='gray',
-            gridcolor='lightgray', title=f'X ({unit})'
+            gridcolor='lightgray', title=f'{var_symbol}ₓ ({unit})'
         ),
         yaxis=dict(
             range=[min(y_min - padding, -min_neg), y_max + padding],
             zeroline=True, zerolinewidth=2, zerolinecolor='gray',
-            gridcolor='lightgray', title=f'Y ({unit})',
+            gridcolor='lightgray', title=f'{var_symbol}ᵧ ({unit})',
             scaleanchor="x", scaleratio=1
         ),
 font=dict(family='Times New Roman, Times, Liberation Serif, Nimbus Roman, DejaVu Serif, serif'),
@@ -364,16 +373,24 @@ with st.sidebar:
         "Acceleration": "m/s²",
     }
     unit_label = units_map.get(quantity, "N")
+    # Variable symbol by quantity
+    var_symbols = {
+        "Force": "F",
+        "Displacement": "d",
+        "Velocity": "V",
+        "Acceleration": "a",
+    }
+    var_symbol = var_symbols.get(quantity, "F")
     
     scale = st.number_input(f"1 cm equals ({unit_label}):", min_value=0.1, value=10.0, step=0.5, on_change=_hide_result)
     st.divider()
     
-    st.subheader("Force 1 (F₁)")
+    st.subheader(f"{quantity} 1 ({var_symbol}₁)")
     f1_mag = st.number_input(f"Magnitude ({unit_label}):", min_value=0.0, value=0.0, step=1.0, key="f1_mag", on_change=_hide_result)
     f1_angle = st.slider("Angle (°):", 0, 360, 0, key="f1_angle", on_change=_hide_result)
     st.divider()
     
-    st.subheader("Force 2 (F₂)")
+    st.subheader(f"{quantity} 2 ({var_symbol}₂)")
     f2_mag = st.number_input(f"Magnitude ({unit_label}):", min_value=0.0, value=0.0, step=1.0, key="f2_mag", on_change=_hide_result)
     f2_angle = st.slider("Angle (°):", 0, 360, 0, key="f2_angle", on_change=_hide_result)
     st.divider()
@@ -398,11 +415,11 @@ if calculate_btn:
         
         with col1:
             st.subheader("Vector Visualization")
-            fig = create_animated_vector_plot(f1, f2, r, scale, animate, unit=unit_label)
+            fig = create_animated_vector_plot(f1, f2, r, scale, animate, unit=unit_label, quantity=quantity)
             st.plotly_chart(fig, use_container_width=True)
         
         with col2:
-            st.subheader("Resultant (FR)")
+            st.subheader(f"Resultant ({var_symbol}R)")
             st.metric("Magnitude", f"{r.mag:.2f} {unit_label}")
             st.metric("Length", f"{r.mag/scale:.2f} cm")
             st.metric("Angle", f"{r.angle:.2f}°")
@@ -415,6 +432,12 @@ if calculate_btn:
             st.divider()
             st.subheader("Analytical Solution")
             solution_text = generate_solution_text(f1, f2, r, scale, unit=unit_label)
+            for a, b in [
+                ('F₁ₓ', f'{var_symbol}₁ₓ'), ('F₁ᵧ', f'{var_symbol}₁ᵧ'), ('F₂ₓ', f'{var_symbol}₂ₓ'), ('F₂ᵧ', f'{var_symbol}₂ᵧ'),
+                ('FRₓ', f'{var_symbol}Rₓ'), ('FRᵧ', f'{var_symbol}Rᵧ'),
+                ('F₁', f'{var_symbol}₁'), ('F₂', f'{var_symbol}₂'), ('FR', f'{var_symbol}R')
+            ]:
+                solution_text = solution_text.replace(a, b)
             st.code(solution_text, language=None)
         
         if len(st.session_state.history) > 1:
@@ -435,10 +458,10 @@ elif st.session_state.get('show_result') and 'last_result' in st.session_state:
     col1, col2 = st.columns([2, 1])
     with col1:
         st.subheader("Vector Visualization")
-        fig = create_animated_vector_plot(f1, f2, r, scale_saved, animate, unit=unit_label)
+        fig = create_animated_vector_plot(f1, f2, r, scale_saved, animate, unit=unit_label, quantity=quantity)
         st.plotly_chart(fig, use_container_width=True)
     with col2:
-        st.subheader("Resultant (FR)")
+        st.subheader(f"Resultant ({var_symbol}R)")
         st.metric("Magnitude", f"{r.mag:.2f} {unit_label}")
         st.metric("Length", f"{r.mag/scale_saved:.2f} cm")
         st.metric("Angle", f"{r.angle:.2f}°")
@@ -463,8 +486,8 @@ else:
 
     data = []
     for (x, y, color, name, mag, ang) in [
-        (f1_x, f1_y, '#5B8DEE', 'F₁', f1_mag, f1_angle),
-        (f2_x, f2_y, '#FF6B6B', 'F₂', f2_mag, f2_angle)
+        (f1_x, f1_y, '#5B8DEE', f'{var_symbol}₁', f1_mag, f1_angle),
+        (f2_x, f2_y, '#FF6B6B', f'{var_symbol}₂', f2_mag, f2_angle)
     ]:
         data.append(go.Scatter(
             x=[0, x], y=[0, y], mode='lines+markers',
@@ -473,11 +496,20 @@ else:
             name=f'{name}: {mag:.1f}{unit_label} @ {ang:.1f}°'
         ))
 
+    # Map quantity type to variable symbol
+    var_symbols = {
+        "Force": "F",
+        "Displacement": "d",
+        "Velocity": "V",
+        "Acceleration": "a"
+    }
+    var_symbol = var_symbols.get(quantity, "F")
+    
     fig = go.Figure(data=data)
     fig.update_layout(
         title="Vector Preview",
-        xaxis=dict(range=[min(min(xs)-padding, -min_neg), max(xs)+padding], zeroline=True, zerolinewidth=2, zerolinecolor='gray', gridcolor='lightgray', title=f'X ({unit_label})'),
-        yaxis=dict(range=[min(min(ys)-padding, -min_neg), max(ys)+padding], zeroline=True, zerolinewidth=2, zerolinecolor='gray', gridcolor='lightgray', title=f'Y ({unit_label})', scaleanchor='x', scaleratio=1),
+        xaxis=dict(range=[min(min(xs)-padding, -min_neg), max(xs)+padding], zeroline=True, zerolinewidth=2, zerolinecolor='gray', gridcolor='lightgray', title=f'{var_symbol}ₓ ({unit_label})'),
+        yaxis=dict(range=[min(min(ys)-padding, -min_neg), max(ys)+padding], zeroline=True, zerolinewidth=2, zerolinecolor='gray', gridcolor='lightgray', title=f'{var_symbol}ᵧ ({unit_label})', scaleanchor='x', scaleratio=1),
         plot_bgcolor='#F0F8FF',
         font=dict(family='Times New Roman, Times, Liberation Serif, Nimbus Roman, DejaVu Serif, serif'),
         showlegend=True,
@@ -496,11 +528,11 @@ else:
     st.session_state.setdefault('inline_f2_angle', st.session_state.get('f2_angle', 0))
     c1, c2 = st.columns(2)
     with c1:
-        st.number_input(f"F1 Magnitude ({unit_label})", min_value=0.0, step=1.0, key='inline_f1_mag', on_change=_hide_result)
-        st.number_input(f"F2 Magnitude ({unit_label})", min_value=0.0, step=1.0, key='inline_f2_mag', on_change=_hide_result)
+        st.number_input(f"{var_symbol}1 Magnitude ({unit_label})", min_value=0.0, step=1.0, key='inline_f1_mag', on_change=_hide_result)
+        st.number_input(f"{var_symbol}2 Magnitude ({unit_label})", min_value=0.0, step=1.0, key='inline_f2_mag', on_change=_hide_result)
     with c2:
-        st.number_input("F1 Angle (°)", min_value=0, max_value=360, step=1, key='inline_f1_angle', on_change=_hide_result)
-        st.number_input("F2 Angle (°)", min_value=0, max_value=360, step=1, key='inline_f2_angle', on_change=_hide_result)
+        st.number_input(f"{var_symbol}1 Angle (°)", min_value=0, max_value=360, step=1, key='inline_f1_angle', on_change=_hide_result)
+        st.number_input(f"{var_symbol}2 Angle (°)", min_value=0, max_value=360, step=1, key='inline_f2_angle', on_change=_hide_result)
 
     def _apply_inline_changes_anim():
         try:

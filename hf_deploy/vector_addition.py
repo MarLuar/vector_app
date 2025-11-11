@@ -538,8 +538,8 @@ def plot_vectors(f1_mag: float, f1_angle: float, f2_mag: float, f2_angle: float,
     ax.axvline(x=0, color=theme.grid_color, linewidth=0.5)
     
     # Labels and title
-    ax.set_xlabel('X (N)', fontsize=12, color=theme.text_color)
-    ax.set_ylabel('Y (N)', fontsize=12, color=theme.text_color)
+    ax.set_xlabel('Fₓ (N)', fontsize=12, color=theme.text_color)
+    ax.set_ylabel('Fᵧ (N)', fontsize=12, color=theme.text_color)
     ax.set_title('Vector Addition of Forces', fontsize=14, fontweight='bold', color=theme.text_color)
     ax.tick_params(colors=theme.text_color)
     

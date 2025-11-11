@@ -580,8 +580,8 @@ class ModernVectorGUI:
         ax.axhline(y=0, color=self.current_theme.grid_color, linewidth=1.5, zorder=2)
         ax.axvline(x=0, color=self.current_theme.grid_color, linewidth=1.5, zorder=2)
         
-        ax.set_xlabel('X (N)', fontsize=11, color=self.current_theme.text_color, fontweight='600')
-        ax.set_ylabel('Y (N)', fontsize=11, color=self.current_theme.text_color, fontweight='600')
+        ax.set_xlabel('Fₓ (N)', fontsize=11, color=self.current_theme.text_color, fontweight='600')
+        ax.set_ylabel('Fᵧ (N)', fontsize=11, color=self.current_theme.text_color, fontweight='600')
         ax.set_title('Vector Addition Visualization', fontsize=13, fontweight='bold',
                     color=self.current_theme.text_color, pad=15)
         ax.tick_params(colors=self.current_theme.text_color)
