@@ -344,6 +344,11 @@ with st.expander("Start Guide — User Manual", expanded=True):
   <li>Use smaller scales for large magnitudes to keep the drawing readable.</li>
   <li>Angles near 90°/270° make x-components ≈ 0; near 0°/180° make y-components ≈ 0.</li>
 </ul>
+<hr/>
+<p>
+  <b>Developer</b>: <a href="https://www.tiktok.com/" target="_blank" rel="noopener noreferrer">Mar Luar Igot</a><br/>
+  <b>Co-developer</b>: Alexander Miranda
+</p>
 </div>
 """,
         unsafe_allow_html=True,

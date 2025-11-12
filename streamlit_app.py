@@ -156,6 +156,11 @@ with st.expander("Start Guide — User Manual", expanded=True):
   <li>Angles near 90°/270° make cos≈0 (x≈0). Angles near 0°/180° make sin≈0 (y≈0).</li>
   <li>If the plot seems cramped, adjust the <b>Scale</b> or vector magnitudes to improve spacing.</li>
 </ul>
+<hr/>
+<p>
+  <b>Developer</b>: <a href="https://www.tiktok.com/" target="_blank" rel="noopener noreferrer">Mar Luar Igot</a><br/>
+  <b>Co-developer</b>: Alexander Miranda
+</p>
 </div>
 """,
         unsafe_allow_html=True,
