@@ -93,6 +93,11 @@ with st.expander("Start Guide — User Manual", expanded=True):
     st.markdown(
         """
 <div class="manual-card">
+<p>
+  <b>Developer</b>: <a href="https://www.tiktok.com/@k00gs" target="_blank" rel="noopener noreferrer">Mar Luar Igot</a><br/>
+  <b>Co-developer</b>: Alexander Miranda
+</p>
+<hr/>
 <h2>1. Introduction</h2>
 <p>This application lets you visualize vector addition for different physical quantities (force, displacement, velocity, acceleration). The math is the same; only the units change.</p>
 <hr/>
@@ -156,11 +161,6 @@ with st.expander("Start Guide — User Manual", expanded=True):
   <li>Angles near 90°/270° make cos≈0 (x≈0). Angles near 0°/180° make sin≈0 (y≈0).</li>
   <li>If the plot seems cramped, adjust the <b>Scale</b> or vector magnitudes to improve spacing.</li>
 </ul>
-<hr/>
-<p>
-  <b>Developer</b>: <a href="https://www.tiktok.com/" target="_blank" rel="noopener noreferrer">Mar Luar Igot</a><br/>
-  <b>Co-developer</b>: Alexander Miranda
-</p>
 </div>
 """,
         unsafe_allow_html=True,

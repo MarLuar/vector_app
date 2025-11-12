@@ -304,6 +304,11 @@ with st.expander("Start Guide — User Manual", expanded=True):
     st.markdown(
         """
 <div class="manual-card">
+<p>
+  <b>Developer</b>: <a href="https://www.tiktok.com/@k00gs" target="_blank" rel="noopener noreferrer">Mar Luar Igot</a><br/>
+  <b>Co-developer</b>: Alexander Miranda
+</p>
+<hr/>
 <h2>1. Introduction</h2>
 <p>This animated variant shows vectors and arcs smoothly for clearer understanding. The underlying math is unchanged: only units differ by the selected Quantity Type.</p>
 <hr/>
@@ -344,11 +349,6 @@ with st.expander("Start Guide — User Manual", expanded=True):
   <li>Use smaller scales for large magnitudes to keep the drawing readable.</li>
   <li>Angles near 90°/270° make x-components ≈ 0; near 0°/180° make y-components ≈ 0.</li>
 </ul>
-<hr/>
-<p>
-  <b>Developer</b>: <a href="https://www.tiktok.com/" target="_blank" rel="noopener noreferrer">Mar Luar Igot</a><br/>
-  <b>Co-developer</b>: Alexander Miranda
-</p>
 </div>
 """,
         unsafe_allow_html=True,
